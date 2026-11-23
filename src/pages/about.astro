@@ -1,0 +1,167 @@
+
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout
+  title="关于木易斋"
+  description="了解木易斋的建立初衷，以及这里关于生活、阅读、观察与思考的记录。"
+>
+  <main class="page">
+    <header>
+      <a href="/" class="logo">木易斋</a>
+      <nav>
+        <a href="/">首页</a>
+        <a href="/articles/">文章</a>
+        <a href="/about/">关于</a>
+      </nav>
+    </header>
+
+    <article class="content">
+      <h1>关于木易斋</h1>
+
+      <p>
+        木易斋，是一个记录生活、阅读、观察与思考的个人空间。
+      </p>
+
+      <p>
+        我希望通过文字，记录生活中的经历，整理自己的想法，
+        也留下那些值得回味和思考的片段。
+      </p>
+
+      <h2>为什么建立这里</h2>
+
+      <p>
+        我一直觉得，生活中有许多值得记录的事情。
+        一些经历会随着时间淡去，一些想法也可能慢慢被遗忘。
+      </p>
+
+      <p>
+        所以，我想有一个属于自己的地方，认真写下一些文字，
+        也把自己的思考一点点积累下来。
+      </p>
+
+      <h2>关于写作</h2>
+
+      <p>
+        这里主要记录个人随笔、生活感悟、阅读体会，
+        以及对社会和现实世界的一些观察。
+      </p>
+
+      <p>
+        不追求华丽的表达，只希望写下真实的感受和独立的思考。
+      </p>
+
+      <div class="signature">
+        木易斋<br />
+        <span>以文字记录生活，以思考认识世界。</span>
+      </div>
+    </article>
+
+    <footer>木易斋 · 以文字记录生活，以思考认识世界。</footer>
+  </main>
+</Layout>
+
+<style>
+  .page {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 28px;
+    color: #302f2b;
+  }
+
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 36px 0;
+  }
+
+  .logo {
+    font-family: "Noto Serif SC", "Songti SC", serif;
+    font-size: 25px;
+    color: #302f2b;
+    text-decoration: none;
+  }
+
+  nav {
+    display: flex;
+    gap: 28px;
+  }
+
+  nav a {
+    color: #77736b;
+    text-decoration: none;
+    font-size: 14px;
+  }
+
+  .content {
+    max-width: 680px;
+    margin: 70px auto 110px;
+  }
+
+  h1, h2 {
+    font-family: "Noto Serif SC", "Songti SC", serif;
+    font-weight: 400;
+  }
+
+  h1 {
+    font-size: 32px;
+    margin-bottom: 45px;
+  }
+
+  h2 {
+    font-size: 22px;
+    margin: 50px 0 20px;
+  }
+
+  .content p {
+    font-size: 16px;
+    line-height: 2.1;
+    color: #555149;
+    margin-bottom: 22px;
+  }
+
+  .signature {
+    margin-top: 65px;
+    padding-top: 25px;
+    border-top: 1px solid #e5e0d8;
+    color: #8b735c;
+    line-height: 2;
+  }
+
+  .signature span {
+    color: #999187;
+    font-size: 13px;
+  }
+
+  footer {
+    text-align: center;
+    padding: 30px 0;
+    border-top: 1px solid #e5e0d8;
+    color: #999187;
+    font-size: 12px;
+  }
+
+  @media (max-width: 600px) {
+    .page {
+      padding: 0 20px;
+    }
+
+    header {
+      padding: 25px 0;
+    }
+
+    nav {
+      gap: 15px;
+    }
+
+    .content {
+      margin-top: 45px;
+    }
+
+    h1 {
+      font-size: 27px;
+    }
+  }
+</style>

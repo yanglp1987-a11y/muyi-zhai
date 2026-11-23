@@ -1,0 +1,178 @@
+
+---
+import Layout from '../../layouts/Layout.astro';
+import { getCollection } from 'astro:content';
+
+const allArticles = await getCollection('articles');
+
+const articles = allArticles
+  .filter((article) => !article.data.draft)
+  .sort(
+    (a, b) =>
+      b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
+  )
+  .map((article) => ({
+    title: article.data.title,
+    category: article.data.category,
+    date: article.data.pubDate.toISOString().slice(0, 10).replaceAll('-', '.'),
+    description: article.data.description,
+    href: `/articles/${article.id}/`,
+  }));
+---
+
+<Layout
+  title="文章｜木易斋"
+  description="阅读木易斋记录的生活札记、思想随笔、读书笔记与各种观察思考。"
+>
+  <main class="page">
+    <header>
+      <a href="/" class="logo">木易斋</a>
+      <nav>
+        <a href="/">首页</a>
+        <a href="/articles/">文章</a>
+        <a href="/about/">关于</a>
+      </nav>
+    </header>
+
+    <section class="intro">
+      <h1>文章</h1>
+      <p>生活、阅读、观察与思考。</p>
+    </section>
+
+    <section class="article-list">
+      {articles.map((article) => (
+        <article>
+          <div class="meta">
+            <a href={`/categories/${encodeURIComponent(article.category)}/`}>
+  {article.category}
+</a>
+            <span>{article.date}</span>
+          </div>
+          <h2><a href={article.href}>{article.title}</a></h2>
+          <p>{article.description}</p>
+        </article>
+      ))}
+    </section>
+
+    <footer>木易斋 · 以文字记录生活，以思考认识世界。</footer>
+  </main>
+</Layout>
+
+<style>
+  .page {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 28px;
+    color: #302f2b;
+  }
+
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 36px 0;
+  }
+
+  .logo {
+    font-family: "Noto Serif SC", "Songti SC", serif;
+    font-size: 25px;
+    color: #302f2b;
+    text-decoration: none;
+  }
+
+  nav {
+    display: flex;
+    gap: 28px;
+  }
+
+  nav a {
+    color: #77736b;
+    text-decoration: none;
+    font-size: 14px;
+  }
+
+  .intro {
+    text-align: center;
+    padding: 65px 0 45px;
+  }
+
+  .intro h1 {
+    font-family: "Noto Serif SC", "Songti SC", serif;
+    font-size: 34px;
+    font-weight: 400;
+  }
+
+  .intro p {
+    color: #77736b;
+    font-size: 14px;
+  }
+
+  .article-list {
+    max-width: 650px;
+    margin: 30px auto 100px;
+  }
+
+  article {
+    padding: 28px 0;
+    border-bottom: 1px solid #e5e0d8;
+  }
+.meta {
+  display: flex;
+  gap: 18px;
+  color: #999187;
+  font-size: 12px;
+}
+
+.meta a {
+  color: #8b735c;
+  text-decoration: none;
+}
+
+.meta a:hover {
+  text-decoration: underline;
+}
+
+  h2 {
+    font-family: "Noto Serif SC", "Songti SC", serif;
+    font-size: 20px;
+    font-weight: 400;
+    margin: 14px 0 10px;
+  }
+
+  h2 a {
+    color: #302f2b;
+    text-decoration: none;
+  }
+
+  article p {
+    color: #77736b;
+    font-size: 14px;
+    line-height: 1.8;
+  }
+
+  footer {
+    text-align: center;
+    padding: 30px 0;
+    border-top: 1px solid #e5e0d8;
+    color: #999187;
+    font-size: 12px;
+  }
+
+  @media (max-width: 600px) {
+    .page {
+      padding: 0 20px;
+    }
+
+    header {
+      padding: 25px 0;
+    }
+
+    nav {
+      gap: 15px;
+    }
+
+    .intro {
+      padding: 45px 0 30px;
+    }
+  }
+</style>
