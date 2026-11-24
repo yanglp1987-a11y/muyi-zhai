@@ -354,6 +354,7 @@ export async function onRequestGet({ request, env }) {
 
 // 新建或修改已发布文章
 export async function onRequestPost({ request, env }) {
+  let stage = "authorize";
   try {
     if (!(await authorize(request, env))) {
       return json(
@@ -362,6 +363,7 @@ export async function onRequestPost({ request, env }) {
       );
     }
 
+    stage = "validate-content-type";
     if (!isJsonRequest(request)) {
       return json(
         { success: false, message: "请求格式不正确" },
@@ -369,6 +371,7 @@ export async function onRequestPost({ request, env }) {
       );
     }
 
+    stage = "read-request-body";
     const article = await readBody(request);
 
     if (!article || !validArticle(article)) {
@@ -392,7 +395,9 @@ export async function onRequestPost({ request, env }) {
 
     // 创建时检查文章是否已经存在
     if (article.action === "create") {
+      stage = "github-check-existing";
       const existing = await githubRequest(env, path);
+      console.error("[articles-api] GitHub existence check response", existing.status);
 
       if (existing.ok) {
         return json(
@@ -419,7 +424,9 @@ export async function onRequestPost({ request, env }) {
 
     // 修改时取得原文件 SHA
     if (article.action === "update") {
+      stage = "github-read-existing";
       const existing = await githubRequest(env, path);
+      console.error("[articles-api] GitHub read existing response", existing.status);
 
       if (existing.status === 404) {
         return json(
@@ -449,6 +456,7 @@ export async function onRequestPost({ request, env }) {
     const markdown = createMarkdown(article);
     const encodedContent = encodeBase64(markdown);
 
+    stage = "github-write-article";
     const response = await githubRequest(env, path, {
       method: "PUT",
       body: JSON.stringify({
@@ -460,6 +468,8 @@ export async function onRequestPost({ request, env }) {
         ...(sha ? { sha } : {})
       })
     });
+
+    console.error("[articles-api] GitHub write response", response.status);
 
     if (response.status === 409 || response.status === 422) {
       return json(
@@ -483,7 +493,11 @@ export async function onRequestPost({ request, env }) {
       message: "文章已提交，网站将自动更新"
     });
 
-  } catch {
+  } catch (error) {
+    console.error("[articles-api] POST failed", {
+      stage,
+      errorName: error instanceof Error ? error.name : "UnknownError"
+    });
     return json(
       { success: false, message: "服务器暂时无法处理请求" },
       500
