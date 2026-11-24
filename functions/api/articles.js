@@ -121,6 +121,35 @@ async function readBody(request) {
   }
 }
 
+// 只提取 GitHub 错误响应中的安全诊断字段，不记录原始响应、请求头或凭据
+async function getGithubErrorDetails(response) {
+  try {
+    const data = await response.clone().json();
+    const details = {};
+
+    if (typeof data.message === "string") {
+      details.message = data.message.slice(0, 300);
+    }
+
+    if (typeof data.documentation_url === "string") {
+      details.documentation_url = data.documentation_url.slice(0, 300);
+    }
+
+    if (Array.isArray(data.errors)) {
+      details.errors = data.errors.slice(0, 5).map(item => ({
+        ...(typeof item.resource === "string" ? { resource: item.resource.slice(0, 80) } : {}),
+        ...(typeof item.field === "string" ? { field: item.field.slice(0, 80) } : {}),
+        ...(typeof item.code === "string" ? { code: item.code.slice(0, 80) } : {}),
+        ...(typeof item.message === "string" ? { message: item.message.slice(0, 200) } : {})
+      }));
+    }
+
+    return details;
+  } catch {
+    return { message: "GitHub returned a non-JSON error response" };
+  }
+}
+
 async function githubRequest(env, path, options = {}) {
   if (!env.GITHUB_TOKEN) {
     throw new Error("GitHub token not configured");
@@ -397,7 +426,14 @@ export async function onRequestPost({ request, env }) {
     if (article.action === "create") {
       stage = "github-check-existing";
       const existing = await githubRequest(env, path);
-      console.error("[articles-api] GitHub existence check response", existing.status);
+      if (!existing.ok && existing.status !== 404) {
+        console.error("[articles-api] GitHub existence check failed", {
+          status: existing.status,
+          ...(await getGithubErrorDetails(existing))
+        });
+      } else {
+        console.error("[articles-api] GitHub existence check response", existing.status);
+      }
 
       if (existing.ok) {
         return json(
