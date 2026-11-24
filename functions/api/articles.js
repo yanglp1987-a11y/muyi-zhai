@@ -121,53 +121,6 @@ async function readBody(request) {
   }
 }
 
-// 只提取 GitHub 错误响应中的安全诊断字段，不记录原始响应、请求头或凭据
-async function getGithubErrorDetails(response) {
-  const details = {
-    contentType: response.headers.get("content-type") || "unknown",
-    server: response.headers.get("server") || "unknown",
-    requestId: response.headers.get("x-github-request-id") || null
-  };
-
-  try {
-    const data = await response.clone().json();
-
-    if (typeof data.message === "string") {
-      details.message = data.message.slice(0, 300);
-    }
-
-    if (typeof data.documentation_url === "string") {
-      details.documentation_url = data.documentation_url.slice(0, 300);
-    }
-
-    if (Array.isArray(data.errors)) {
-      details.errors = data.errors.slice(0, 5).map(item => ({
-        ...(typeof item.resource === "string" ? { resource: item.resource.slice(0, 80) } : {}),
-        ...(typeof item.field === "string" ? { field: item.field.slice(0, 80) } : {}),
-        ...(typeof item.code === "string" ? { code: item.code.slice(0, 80) } : {}),
-        ...(typeof item.message === "string" ? { message: item.message.slice(0, 200) } : {})
-      }));
-    }
-
-    return details;
-  } catch {
-    try {
-      const text = await response.clone().text();
-      details.bodyPreview = text
-        .replace(/<script[\s\S]*?<\/script>/gi, " ")
-        .replace(/<style[\s\S]*?<\/style>/gi, " ")
-        .replace(/<[^>]*>/g, " ")
-        .replace(/\s+/g, " ")
-        .trim()
-        .slice(0, 400);
-    } catch {
-      details.bodyPreview = "Unable to read error response";
-    }
-
-    return details;
-  }
-}
-
 async function githubRequest(env, path, options = {}) {
   if (!env.GITHUB_TOKEN) {
     throw new Error("GitHub token not configured");
@@ -447,11 +400,8 @@ export async function onRequestPost({ request, env }) {
       const existing = await githubRequest(env, path);
       if (!existing.ok && existing.status !== 404) {
         console.error("[articles-api] GitHub existence check failed", {
-          status: existing.status,
-          ...(await getGithubErrorDetails(existing))
+          status: existing.status
         });
-      } else {
-        console.error("[articles-api] GitHub existence check response", existing.status);
       }
 
       if (existing.ok) {
@@ -481,7 +431,6 @@ export async function onRequestPost({ request, env }) {
     if (article.action === "update") {
       stage = "github-read-existing";
       const existing = await githubRequest(env, path);
-      console.error("[articles-api] GitHub read existing response", existing.status);
 
       if (existing.status === 404) {
         return json(
@@ -491,6 +440,9 @@ export async function onRequestPost({ request, env }) {
       }
 
       if (!existing.ok) {
+        console.error("[articles-api] GitHub read existing failed", {
+          status: existing.status
+        });
         return json(
           { success: false, message: "读取原文章失败" },
           502
@@ -524,7 +476,11 @@ export async function onRequestPost({ request, env }) {
       })
     });
 
-    console.error("[articles-api] GitHub write response", response.status);
+    if (!response.ok) {
+      console.error("[articles-api] GitHub write failed", {
+        status: response.status
+      });
+    }
 
     if (response.status === 409 || response.status === 422) {
       return json(
