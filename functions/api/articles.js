@@ -181,6 +181,7 @@ async function githubRequest(env, path, options = {}) {
         "Authorization": `Bearer ${env.GITHUB_TOKEN}`,
         "Accept": "application/vnd.github+json",
         "X-GitHub-Api-Version": "2022-11-28",
+        "User-Agent": "muyi-zhai-admin",
         "Content-Type": "application/json",
         ...options.headers
       }
