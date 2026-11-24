@@ -157,7 +157,7 @@ async function getGithubErrorDetails(response) {
         .replace(/<script[\s\S]*?<\/script>/gi, " ")
         .replace(/<style[\s\S]*?<\/style>/gi, " ")
         .replace(/<[^>]*>/g, " ")
-        .replace(/\\s+/g, " ")
+        .replace(/\s+/g, " ")
         .trim()
         .slice(0, 400);
     } catch {
