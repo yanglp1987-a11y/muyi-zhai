@@ -1,0 +1,16 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "muyi-zhai",
+  "compatibility_date": "2026-11-23",
+  "pages_build_output_dir": "./dist",
+  "kv_namespaces": [
+    {
+      "binding": "AUTH_CODES",
+      "id": "00000000000000000000000000000001"
+    },
+    {
+      "binding": "ARTICLE_DRAFTS",
+      "id": "00000000000000000000000000000002"
+    }
+  ]
+}
