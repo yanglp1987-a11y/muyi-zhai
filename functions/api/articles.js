@@ -123,9 +123,14 @@ async function readBody(request) {
 
 // 只提取 GitHub 错误响应中的安全诊断字段，不记录原始响应、请求头或凭据
 async function getGithubErrorDetails(response) {
+  const details = {
+    contentType: response.headers.get("content-type") || "unknown",
+    server: response.headers.get("server") || "unknown",
+    requestId: response.headers.get("x-github-request-id") || null
+  };
+
   try {
     const data = await response.clone().json();
-    const details = {};
 
     if (typeof data.message === "string") {
       details.message = data.message.slice(0, 300);
@@ -146,7 +151,20 @@ async function getGithubErrorDetails(response) {
 
     return details;
   } catch {
-    return { message: "GitHub returned a non-JSON error response" };
+    try {
+      const text = await response.clone().text();
+      details.bodyPreview = text
+        .replace(/<script[\\s\\S]*?<\\/script>/gi, " ")
+        .replace(/<style[\\s\\S]*?<\\/style>/gi, " ")
+        .replace(/<[^>]*>/g, " ")
+        .replace(/\\s+/g, " ")
+        .trim()
+        .slice(0, 400);
+    } catch {
+      details.bodyPreview = "Unable to read error response";
+    }
+
+    return details;
   }
 }
 
