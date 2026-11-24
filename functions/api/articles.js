@@ -154,8 +154,8 @@ async function getGithubErrorDetails(response) {
     try {
       const text = await response.clone().text();
       details.bodyPreview = text
-        .replace(/<script[\\s\\S]*?<\\/script>/gi, " ")
-        .replace(/<style[\\s\\S]*?<\\/style>/gi, " ")
+        .replace(/<script[\s\S]*?<\/script>/gi, " ")
+        .replace(/<style[\s\S]*?<\/style>/gi, " ")
         .replace(/<[^>]*>/g, " ")
         .replace(/\\s+/g, " ")
         .trim()
