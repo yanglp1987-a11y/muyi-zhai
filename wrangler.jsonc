@@ -1,3 +1,4 @@
+
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "muyi-zhai",
@@ -6,11 +7,11 @@
   "kv_namespaces": [
     {
       "binding": "AUTH_CODES",
-      "id": "00000000000000000000000000000001"
+      "id": "c5d39e1f018e45c08215ba818be49edf"
     },
     {
       "binding": "ARTICLE_DRAFTS",
-      "id": "00000000000000000000000000000002"
+      "id": "e278cc3f643c4a1a941bb0e8fede5dfb"
     }
   ]
 }
