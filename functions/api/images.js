@@ -142,7 +142,7 @@ export async function onRequestPost({ request, env }) {
 
     return json({
       success: true,
-      url: `/images/articles/${filename}`,
+      url: `https://muyi-zhai.pages.dev/images/articles/${filename}`,
       message: "图片上传成功"
     });
   } catch (error) {
