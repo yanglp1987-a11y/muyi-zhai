@@ -591,16 +591,16 @@ export const prerender = true;
 
       function markdownToHtml(markdown: string): string {
         const esc = (v: string) => v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-        const inline = (v: string) => esc(v).replace(/\\*\\*(.+?)\\*\\*/g, "<strong>$1</strong>").replace(/\\*(.+?)\\*/g, "<em>$1</em>").replace(/~~(.+?)~~/g, "<s>$1</s>").replace(/!\\[([^\\]]*)\\]\\((\\/images\\/articles\\/[a-f0-9-]{36}\\.(?:jpe?g|png|gif|webp))\\)/gi, '<img alt="$1" src="$2">');
+        const inline = (v: string) => esc(v).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/\*(.+?)\*/g, "<em>$1</em>").replace(/~~(.+?)~~/g, "<s>$1</s>").replace(/!\[([^\]]*)\]\((\/images\/articles\/[a-f0-9-]{36}\.(?:jpe?g|png|gif|webp))\)/gi, '<img alt="$1" src="$2">');
         const out: string[] = []; let p: string[] = []; let list: "ul" | "ol" | null = null;
         const fp = () => { if (p.length) { out.push("<p>" + inline(p.join("<br>")) + "</p>"); p = []; } };
         const fl = () => { if (list) { out.push("</" + list + ">"); list = null; } };
-        for (const line of markdown.replace(/\\r/g, "").split("\\n")) {
-          const h = line.match(/^(#{1,3})\\s+(.+)$/), b = line.match(/^\\s*[-*+]\\s+(.+)$/), n = line.match(/^\\s*\\d+\\.\\s+(.+)$/);
+        for (const line of markdown.replace(/\r/g, "").split("\n")) {
+          const h = line.match(/^(#{1,3})\s+(.+)$/), b = line.match(/^\s*[-*+]\s+(.+)$/), n = line.match(/^\s*\d+\.\s+(.+)$/);
           if (!line.trim()) { fp(); fl(); continue; }
           if (h) { fp(); fl(); const level = h[1].length; out.push("<h"+level+">"+inline(h[2])+"</h"+level+">"); continue; }
           if (b || n) { fp(); const next = b ? "ul" : "ol"; if (list !== next) { fl(); list = next; out.push("<"+list+">"); } out.push("<li>"+inline((b || n)![1])+"</li>"); continue; }
-          if (line.startsWith(">")) { fp(); fl(); out.push("<blockquote><p>"+inline(line.replace(/^>\\s?/, ""))+"</p></blockquote>"); continue; }
+          if (line.startsWith(">")) { fp(); fl(); out.push("<blockquote><p>"+inline(line.replace(/^>\s?/, ""))+"</p></blockquote>"); continue; }
           fl(); p.push(line);
         }
         fp(); fl(); return out.join("");
