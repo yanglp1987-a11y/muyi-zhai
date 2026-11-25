@@ -1,3 +1,4 @@
+import { sanitizeRichHtml } from "../_shared/sanitize-rich-html.js";
 
 const DRAFT_PREFIX = "draft:";
 const MAX_BODY_SIZE = 110000;
@@ -304,6 +305,13 @@ export async function onRequestPost({ request, env }) {
         400
       );
     }
+    if (article.contentFormat !== undefined && !["markdown", "html"].includes(article.contentFormat)) {
+      return json({ success: false, message: "正文格式不正确" }, 400);
+    }
+    if (article.contentFormat === "html") {
+      article.content = sanitizeRichHtml(article.content);
+      if (!article.content) return json({ success: false, message: "正文内容不符合安全格式" }, 400);
+    }
 
     const draft = {
       slug: article.slug,
@@ -312,6 +320,7 @@ export async function onRequestPost({ request, env }) {
       category: article.category.trim(),
       pubDate: article.pubDate,
       content: article.content,
+      contentFormat: article.contentFormat === "html" ? "html" : "markdown",
       updatedAt: new Date().toISOString()
     };
 
