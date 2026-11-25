@@ -156,23 +156,26 @@ const date = article.data.pubDate
     margin: 0 0 26px;
   }
 
-  .body img {
+  /* Astro Content 渲染的图片属于插槽内容，使用 :global 确保样式真正生效 */
+  .body :global(img) {
     display: block;
+    width: 100%;
     max-width: 100%;
     max-height: 620px;
-    width: auto;
     height: auto;
     object-fit: contain;
     margin: 28px auto;
     border-radius: 4px;
+    box-sizing: border-box;
   }
 
-  .body figure {
+  .body :global(figure) {
+    max-width: 100%;
     margin: 28px 0;
     text-align: center;
   }
 
-  .body figure img {
+  .body :global(figure img) {
     margin: 0 auto;
   }
 
