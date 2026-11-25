@@ -1,3 +1,4 @@
+import { sanitizeRichHtml } from "../_shared/sanitize-rich-html.js";
 
 const OWNER = "yanglp1987-a11y";
 const REPO = "muyi-zhai";
@@ -183,12 +184,13 @@ function validArticle(article) {
 
 function createMarkdown(article) {
   const safe = value => JSON.stringify(value);
-
+  const format = article.contentFormat === "html" ? "html" : "markdown";
   return `---
 title: ${safe(article.title.trim())}
 description: ${safe(article.description.trim())}
 pubDate: ${safe(article.pubDate)}
 category: ${safe(article.category.trim())}
+contentFormat: ${safe(format)}
 draft: false
 ---
 
@@ -380,6 +382,13 @@ export async function onRequestPost({ request, env }) {
         { success: false, message: "文章信息不完整或格式不正确" },
         400
       );
+    }
+    if (article.contentFormat !== undefined && !["markdown", "html"].includes(article.contentFormat)) {
+      return json({ success: false, message: "正文格式不正确" }, 400);
+    }
+    if (article.contentFormat === "html") {
+      article.content = sanitizeRichHtml(article.content);
+      if (!article.content) return json({ success: false, message: "正文内容不符合安全格式" }, 400);
     }
 
     if (
