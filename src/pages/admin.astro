@@ -543,10 +543,7 @@ export const prerender = true;
       }
 
       function parseMarkdown(markdown: string, slug: string): ArticleData {
-        const match = markdown.match(/^---\s*\r?
-([\s\S]*?)\r?
----\s*\r?
-?([\s\S]*)$/);
+        const match = markdown.match(/^---\s*\r?\n([\s\S]*?)\r?\n---\s*\r?\n?([\s\S]*)$/);
 
         if (!match) {
           throw new Error("文章格式无法识别，请检查 Markdown 文件的 Frontmatter。");
@@ -585,9 +582,7 @@ export const prerender = true;
           description: descriptionInput.value.trim(),
           category: categoryInput.value.trim(),
           pubDate: dateInput.value,
-          content: contentInput.value.replace(/\
-/g, "
-"),
+          content: contentInput.value.replace(/\\n/g, "\n"),
         };
 
         if (!data.slug || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(data.slug)) {
@@ -773,22 +768,14 @@ export const prerender = true;
             body: JSON.stringify({ image: base64 }),
           });
 
-          const alt = file.name.replace(/[\[\]
-\r]/g, "").slice(0, 100) || "文章图片";
+          const alt = file.name.replace(/[\[\]\n\r]/g, "").slice(0, 100) || "文章图片";
           const markdown = `![${alt}](${result.url})`;
           const start = contentInput.selectionStart;
           const end = contentInput.selectionEnd;
           const before = contentInput.value.slice(0, start);
           const after = contentInput.value.slice(end);
-          const prefix = before && !before.endsWith("
-") ? "
-
-" : "";
-          const suffix = after && !after.startsWith("
-") ? "
-
-" : "
-";
+          const prefix = before && !before.endsWith("\n") ? "\n\n" : "";
+          const suffix = after && !after.startsWith("\n") ? "\n\n" : "\n";
           contentInput.value = before + prefix + markdown + suffix + after;
           contentInput.focus();
           const cursor = (before + prefix + markdown + suffix).length;
