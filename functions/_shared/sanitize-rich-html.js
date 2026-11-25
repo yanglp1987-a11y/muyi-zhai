@@ -2,10 +2,10 @@ const ALLOWED_TAGS = new Set(["p","br","h1","h2","h3","strong","b","em","i","u",
 const VOID_TAGS = new Set(["br","img"]);
 const DANGEROUS_TAGS = new Set(["script","style","iframe","object","embed","svg","math","template","noscript"]);
 const FONT_SIZES = new Set(["12pt","14pt","16pt","18pt","20pt","24pt","28pt","32pt"]);
-const IMAGE_PATH = /^\\/images\\/articles\\/[a-f0-9-]{36}\\.(?:jpe?g|png|gif|webp)$/i;
+const IMAGE_PATH = /^\/images\/articles\/[a-f0-9-]{36}\.(?:jpe?g|png|gif|webp)$/i;
 
 function escapeText(value) {
-  return value.replace(/&(?!(?:#\\d+|#x[0-9a-f]+|[a-z][a-z0-9]+);)/gi, "&amp;")
+  return value.replace(/&(?!(?:#\d+|#x[0-9a-f]+|[a-z][a-z0-9]+);)/gi, "&amp;")
     .replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 function decodeAttribute(value) {
@@ -16,17 +16,17 @@ function parseAttributes(source) {
   const attrs = Object.create(null);
   let i = 0;
   while (i < source.length) {
-    while (/\\s/.test(source[i] || "")) i++;
+    while (/\s/.test(source[i] || "")) i++;
     if (i >= source.length || source[i] === "/") break;
     const start = i;
-    while (i < source.length && !/[\\s=/>]/.test(source[i])) i++;
+    while (i < source.length && !/[\s=/>]/.test(source[i])) i++;
     if (start === i) { i++; continue; }
     const name = source.slice(start, i).toLowerCase();
-    while (/\\s/.test(source[i] || "")) i++;
+    while (/\s/.test(source[i] || "")) i++;
     let value = "";
     if (source[i] === "=") {
       i++;
-      while (/\\s/.test(source[i] || "")) i++;
+      while (/\s/.test(source[i] || "")) i++;
       const quote = source[i] === '"' || source[i] === "'" ? source[i++] : "";
       const valueStart = i;
       if (quote) {
@@ -34,7 +34,7 @@ function parseAttributes(source) {
         value = source.slice(valueStart, i);
         if (source[i] === quote) i++;
       } else {
-        while (i < source.length && !/[\\s>]/.test(source[i])) i++;
+        while (i < source.length && !/[\s>]/.test(source[i])) i++;
         value = source.slice(valueStart, i);
       }
     }
@@ -73,8 +73,8 @@ function serializeAttrs(tag, attrs) {
     if (!IMAGE_PATH.test(src)) return null;
     out.push('src="' + src + '"');
     if (attrs.alt) out.push('alt="' + escapeText(attrs.alt.slice(0,200)) + '"');
-    if (attrs.width && /^\\d{1,4}$/.test(attrs.width) && Number(attrs.width) > 0) out.push('width="' + attrs.width + '"');
-    if (attrs.height && /^\\d{1,4}$/.test(attrs.height) && Number(attrs.height) > 0) out.push('height="' + attrs.height + '"');
+    if (attrs.width && /^\d{1,4}$/.test(attrs.width) && Number(attrs.width) > 0) out.push('width="' + attrs.width + '"');
+    if (attrs.height && /^\d{1,4}$/.test(attrs.height) && Number(attrs.height) > 0) out.push('height="' + attrs.height + '"');
   }
   if (["p","h1","h2","h3","span"].includes(tag) && attrs.style) {
     const style = safeStyle(attrs.style, tag);
@@ -99,11 +99,11 @@ export function sanitizeRichHtml(input) {
     const token = readTag(input, i);
     if (!token) { if (!skipTag) output += "&lt;"; i++; continue; }
     const raw = token.raw.trim();
-    const match = raw.match(/^(\\/)?\\s*([a-z][a-z0-9:-]*)\\b([\\s\\S]*)$/i);
+    const match = raw.match(/^(\/)?\s*([a-z][a-z0-9:-]*)\b([\s\S]*)$/i);
     if (!match) { if (!skipTag) output += "&lt;" + escapeText(raw) + "&gt;"; i = token.end; continue; }
     const closing = !!match[1], tag = match[2].toLowerCase(), tail = match[3];
     if (skipTag) {
-      if (tag === skipTag) { if (closing) skipDepth--; else if (!/\\/$/.test(tail.trim())) skipDepth++; if (skipDepth <= 0) skipTag = null; }
+      if (tag === skipTag) { if (closing) skipDepth--; else if (!/\/$/.test(tail.trim())) skipDepth++; if (skipDepth <= 0) skipTag = null; }
       i = token.end; continue;
     }
     if (!closing && DANGEROUS_TAGS.has(tag)) { skipTag = tag; skipDepth = 1; i = token.end; continue; }
