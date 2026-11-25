@@ -157,6 +157,7 @@ export const prerender = true;
         category: string;
         pubDate: string;
         content: string;
+        contentFormat?: "markdown" | "html";
       };
 
       const $ = <T extends HTMLElement>(selector: string) =>
@@ -213,9 +214,19 @@ export const prerender = true;
         if (editor) contentInput.value = editor.getHTML();
       }
 
+      const FontSize = TextStyle.extend({
+        addAttributes() {
+          return { ...this.parent?.(), fontSize: {
+            default: null,
+            parseHTML: element => ["12pt","14pt","16pt","18pt","20pt","24pt","28pt","32pt"].includes((element as HTMLElement).style.fontSize) ? (element as HTMLElement).style.fontSize : null,
+            renderHTML: attrs => attrs.fontSize && ["12pt","14pt","16pt","18pt","20pt","24pt","28pt","32pt"].includes(attrs.fontSize) ? { style: `font-size: ${attrs.fontSize}` } : {},
+          }};
+        },
+      });
+
       editor = new Editor({
         element: richEditor,
-        extensions: [StarterKit, TextStyle, Color, Underline, TextAlign.configure({ types: ["heading", "paragraph"] }), Image],
+        extensions: [StarterKit, FontSize, Color, Underline, TextAlign.configure({ types: ["heading", "paragraph"] }), Image],
         content: "",
         onUpdate: syncEditorContent,
       });
@@ -505,7 +516,9 @@ export const prerender = true;
         descriptionInput.value = data?.description || "";
         dateInput.value = data?.pubDate || new Date().toISOString().slice(0, 10);
         contentInput.value = data?.content || "";
-        if (editor) editor.commands.setContent(data?.content || "");
+        const editorContent = data?.contentFormat === "html" ? (data.content || "") : markdownToHtml(data?.content || "");
+        if (editor) editor.commands.setContent(editorContent);
+        syncEditorContent();
 
         $("#editor-heading").textContent =
           mode === "article" ? "编辑已发布文章" :
@@ -572,7 +585,25 @@ export const prerender = true;
           category: readField("category"),
           pubDate: String(readField("pubDate")).slice(0, 10),
           content,
+          contentFormat: readField("contentFormat") === "html" ? "html" : "markdown",
         };
+      }
+
+      function markdownToHtml(markdown: string): string {
+        const esc = (v: string) => v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        const inline = (v: string) => esc(v).replace(/\\*\\*(.+?)\\*\\*/g, "<strong>$1</strong>").replace(/\\*(.+?)\\*/g, "<em>$1</em>").replace(/~~(.+?)~~/g, "<s>$1</s>").replace(/!\\[([^\\]]*)\\]\\((\\/images\\/articles\\/[a-f0-9-]{36}\\.(?:jpe?g|png|gif|webp))\\)/gi, '<img alt="$1" src="$2">');
+        const out: string[] = []; let p: string[] = []; let list: "ul" | "ol" | null = null;
+        const fp = () => { if (p.length) { out.push("<p>" + inline(p.join("<br>")) + "</p>"); p = []; } };
+        const fl = () => { if (list) { out.push("</" + list + ">"); list = null; } };
+        for (const line of markdown.replace(/\\r/g, "").split("\\n")) {
+          const h = line.match(/^(#{1,3})\\s+(.+)$/), b = line.match(/^\\s*[-*+]\\s+(.+)$/), n = line.match(/^\\s*\\d+\\.\\s+(.+)$/);
+          if (!line.trim()) { fp(); fl(); continue; }
+          if (h) { fp(); fl(); const level = h[1].length; out.push("<h"+level+">"+inline(h[2])+"</h"+level+">"); continue; }
+          if (b || n) { fp(); const next = b ? "ul" : "ol"; if (list !== next) { fl(); list = next; out.push("<"+list+">"); } out.push("<li>"+inline((b || n)![1])+"</li>"); continue; }
+          if (line.startsWith(">")) { fp(); fl(); out.push("<blockquote><p>"+inline(line.replace(/^>\\s?/, ""))+"</p></blockquote>"); continue; }
+          fl(); p.push(line);
+        }
+        fp(); fl(); return out.join("");
       }
 
       function readEditor(): ArticleData | null {
@@ -582,7 +613,8 @@ export const prerender = true;
           description: descriptionInput.value.trim(),
           category: categoryInput.value.trim(),
           pubDate: dateInput.value,
-          content: contentInput.value.replace(/\\n/g, "\n"),
+          content: editor ? editor.getHTML() : contentInput.value.replace(/\\n/g, "\n"),
+          contentFormat: "html",
         };
 
         if (!data.slug || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(data.slug)) {
@@ -769,17 +801,8 @@ export const prerender = true;
           });
 
           const alt = file.name.replace(/[\[\]\n\r]/g, "").slice(0, 100) || "文章图片";
-          const markdown = `![${alt}](${result.url})`;
-          const start = contentInput.selectionStart;
-          const end = contentInput.selectionEnd;
-          const before = contentInput.value.slice(0, start);
-          const after = contentInput.value.slice(end);
-          const prefix = before && !before.endsWith("\n") ? "\n\n" : "";
-          const suffix = after && !after.startsWith("\n") ? "\n\n" : "\n";
-          contentInput.value = before + prefix + markdown + suffix + after;
-          contentInput.focus();
-          const cursor = (before + prefix + markdown + suffix).length;
-          contentInput.setSelectionRange(cursor, cursor);
+          editor?.chain().focus().setImage({ src: result.url, alt }).run();
+          syncEditorContent();
           message(editorStatus, "图片上传成功，已插入正文。");
         } catch (error) {
           message(editorStatus, (error as Error).message || "图片上传失败。", true);
