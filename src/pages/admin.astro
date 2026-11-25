@@ -690,14 +690,14 @@ export const prerender = true;
             body: JSON.stringify({ image: base64 }),
           });
 
-          const alt = file.name.replace(/[\\[\\]\\n\\r]/g, "").slice(0, 100) || "文章图片";
+          const alt = file.name.replace(/[\[\]\n\r]/g, "").slice(0, 100) || "文章图片";
           const markdown = `![${alt}](${result.url})`;
           const start = contentInput.selectionStart;
           const end = contentInput.selectionEnd;
           const before = contentInput.value.slice(0, start);
           const after = contentInput.value.slice(end);
-          const prefix = before && !before.endsWith("\\n") ? "\\n\\n" : "";
-          const suffix = after && !after.startsWith("\\n") ? "\\n\\n" : "\\n";
+          const prefix = before && !before.endsWith("\n") ? "\n\n" : "";
+          const suffix = after && !after.startsWith("\n") ? "\n\n" : "\n";
           contentInput.value = before + prefix + markdown + suffix + after;
           contentInput.focus();
           const cursor = (before + prefix + markdown + suffix).length;
