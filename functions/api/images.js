@@ -25,7 +25,7 @@ function validOrigin(request) {
 async function isAdmin(request, env) {
   if (!validOrigin(request)) return false;
   const cookie = request.headers.get("Cookie") || "";
-  const match = cookie.match(/(?:^|;\\s*)muyi_session=([a-f0-9]{64})(?:;|$)/);
+  const match = cookie.match(/(?:^|;\s*)muyi_session=([a-f0-9]{64})(?:;|$)/);
   if (!match || !env.AUTH_CODES || !env.ADMIN_EMAIL) return false;
 
   const digest = await crypto.subtle.digest(
@@ -84,7 +84,7 @@ export async function onRequestPost({ request, env }) {
     }
 
     const contentType = request.headers.get("Content-Type") || "";
-    if (!/^application\\/json(?:\\s*;|$)/i.test(contentType)) {
+    if (!/^application\/json(?:\s*;|$)/i.test(contentType)) {
       return json({ success: false, message: "请求格式不正确" }, 400);
     }
 
