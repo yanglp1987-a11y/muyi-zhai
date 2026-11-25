@@ -504,7 +504,7 @@ export const prerender = true;
           description: descriptionInput.value.trim(),
           category: categoryInput.value.trim(),
           pubDate: dateInput.value,
-          content: contentInput.value,
+          content: contentInput.value.replace(/\\n/g, "\n"),
         };
 
         if (!data.slug || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(data.slug)) {
