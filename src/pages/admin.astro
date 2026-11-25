@@ -154,7 +154,7 @@ export const prerender = true;
       const $ = <T extends HTMLElement>(selector: string) =>
         document.querySelector<T>(selector)!;
 
-      const loading = $("#loading");\n      editor = new Editor({\n        element: richEditor,\n        extensions: [StarterKit, TextStyle, Color, Underline, TextAlign.configure({ types: ["heading", "paragraph"] }), Image],\n        content: "",\n        onUpdate: syncEditorContent,\n      });
+      const loading = $("#loading");\n
       const loginPanel = $("#login-panel");
       const dashboard = $("#dashboard");
       const loginForm = $("#login-form");
@@ -203,6 +203,8 @@ export const prerender = true;
       function syncEditorContent() {
         if (editor) contentInput.value = editor.getHTML();
       }
+
+      editor = new Editor({\n        element: richEditor,\n        extensions: [StarterKit, TextStyle, Color, Underline, TextAlign.configure({ types: ["heading", "paragraph"] }), Image],\n        content: "",\n        onUpdate: syncEditorContent,\n      });
 
       document.querySelectorAll<HTMLButtonElement>("[data-format]").forEach(button => {
         button.addEventListener("click", () => applyFormat(button.dataset.format!));
