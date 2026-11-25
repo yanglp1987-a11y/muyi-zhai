@@ -142,7 +142,7 @@ export async function onRequestPost({ request, env }) {
 
     return json({
       success: true,
-      url: `/${path}`,
+      url: `/images/articles/${filename}`,
       message: "图片上传成功"
     });
   } catch (error) {
