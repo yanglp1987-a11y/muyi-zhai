@@ -188,10 +188,10 @@ export const prerender = true;
         else if (format === "strike") wrap("~~");
         else if (format === "h2" || format === "h3") {
           const prefix = format === "h2" ? "## " : "### ";
-          const lineStart = before.lastIndexOf("\\n") + 1;
-          const lineEndIndex = contentInput.value.indexOf("\\n", start);
+          const lineStart = before.lastIndexOf("\n") + 1;
+          const lineEndIndex = contentInput.value.indexOf("\n", start);
           const lineEnd = lineEndIndex === -1 ? contentInput.value.length : lineEndIndex;
-          const line = contentInput.value.slice(lineStart, lineEnd).replace(/^#{1,6}\\s+/, "");
+          const line = contentInput.value.slice(lineStart, lineEnd).replace(/^#{1,6}\s+/, "");
           replacement = prefix + line;
           contentInput.value = contentInput.value.slice(0, lineStart) + replacement + contentInput.value.slice(lineEnd);
           cursor = lineStart + replacement.length;
@@ -200,8 +200,8 @@ export const prerender = true;
           return;
         } else if (format === "quote" || format === "ul" || format === "ol") {
           const marker = format === "quote" ? "> " : format === "ul" ? "- " : "1. ";
-          const lines = (selected || "").split("\\n");
-          replacement = lines.map(line => marker + line).join("\\n");
+          const lines = (selected || "").split("\n");
+          replacement = lines.map(line => marker + line).join("\n");
           if (!selected) replacement += " ";
           cursor = start + replacement.length;
         }
