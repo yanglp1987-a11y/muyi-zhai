@@ -142,7 +142,15 @@ export const prerender = true;
     </main>
 
     <script>
-      import { Editor } from "@tiptap/core";\n      import StarterKit from "@tiptap/starter-kit";\n      import TextStyle from "@tiptap/extension-text-style";\n      import Color from "@tiptap/extension-color";\n      import Underline from "@tiptap/extension-underline";\n      import TextAlign from "@tiptap/extension-text-align";\n      import Image from "@tiptap/extension-image";\n\n      type ArticleData = {
+      import { Editor } from "@tiptap/core";
+      import StarterKit from "@tiptap/starter-kit";
+      import TextStyle from "@tiptap/extension-text-style";
+      import Color from "@tiptap/extension-color";
+      import Underline from "@tiptap/extension-underline";
+      import TextAlign from "@tiptap/extension-text-align";
+      import Image from "@tiptap/extension-image";
+
+      type ArticleData = {
         slug: string;
         title: string;
         description: string;
@@ -154,7 +162,8 @@ export const prerender = true;
       const $ = <T extends HTMLElement>(selector: string) =>
         document.querySelector<T>(selector)!;
 
-      const loading = $("#loading");\n
+      const loading = $("#loading");
+
       const loginPanel = $("#login-panel");
       const dashboard = $("#dashboard");
       const loginForm = $("#login-form");
@@ -204,7 +213,12 @@ export const prerender = true;
         if (editor) contentInput.value = editor.getHTML();
       }
 
-      editor = new Editor({\n        element: richEditor,\n        extensions: [StarterKit, TextStyle, Color, Underline, TextAlign.configure({ types: ["heading", "paragraph"] }), Image],\n        content: "",\n        onUpdate: syncEditorContent,\n      });
+      editor = new Editor({
+        element: richEditor,
+        extensions: [StarterKit, TextStyle, Color, Underline, TextAlign.configure({ types: ["heading", "paragraph"] }), Image],
+        content: "",
+        onUpdate: syncEditorContent,
+      });
 
       document.querySelectorAll<HTMLButtonElement>("[data-format]").forEach(button => {
         button.addEventListener("click", () => applyFormat(button.dataset.format!));
@@ -490,7 +504,8 @@ export const prerender = true;
         categoryInput.value = data?.category || "生活札记";
         descriptionInput.value = data?.description || "";
         dateInput.value = data?.pubDate || new Date().toISOString().slice(0, 10);
-        contentInput.value = data?.content || "";\n        if (editor) editor.commands.setContent(data?.content || "");
+        contentInput.value = data?.content || "";
+        if (editor) editor.commands.setContent(data?.content || "");
 
         $("#editor-heading").textContent =
           mode === "article" ? "编辑已发布文章" :
@@ -528,7 +543,10 @@ export const prerender = true;
       }
 
       function parseMarkdown(markdown: string, slug: string): ArticleData {
-        const match = markdown.match(/^---\s*\r?\n([\s\S]*?)\r?\n---\s*\r?\n?([\s\S]*)$/);
+        const match = markdown.match(/^---\s*\r?
+([\s\S]*?)\r?
+---\s*\r?
+?([\s\S]*)$/);
 
         if (!match) {
           throw new Error("文章格式无法识别，请检查 Markdown 文件的 Frontmatter。");
@@ -567,7 +585,9 @@ export const prerender = true;
           description: descriptionInput.value.trim(),
           category: categoryInput.value.trim(),
           pubDate: dateInput.value,
-          content: contentInput.value.replace(/\\n/g, "\n"),
+          content: contentInput.value.replace(/\
+/g, "
+"),
         };
 
         if (!data.slug || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(data.slug)) {
@@ -753,14 +773,22 @@ export const prerender = true;
             body: JSON.stringify({ image: base64 }),
           });
 
-          const alt = file.name.replace(/[\[\]\n\r]/g, "").slice(0, 100) || "文章图片";
+          const alt = file.name.replace(/[\[\]
+\r]/g, "").slice(0, 100) || "文章图片";
           const markdown = `![${alt}](${result.url})`;
           const start = contentInput.selectionStart;
           const end = contentInput.selectionEnd;
           const before = contentInput.value.slice(0, start);
           const after = contentInput.value.slice(end);
-          const prefix = before && !before.endsWith("\n") ? "\n\n" : "";
-          const suffix = after && !after.startsWith("\n") ? "\n\n" : "\n";
+          const prefix = before && !before.endsWith("
+") ? "
+
+" : "";
+          const suffix = after && !after.startsWith("
+") ? "
+
+" : "
+";
           contentInput.value = before + prefix + markdown + suffix + after;
           contentInput.focus();
           const cursor = (before + prefix + markdown + suffix).length;
