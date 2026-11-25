@@ -1,20 +1,1057 @@
-  .tiptap-editor {
-    min-height: 420px;
-    padding: 18px 20px;
+
+---
+export const prerender = true;
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>管理后台 · 木易斋</title>
+  </head>
+
+  <body>
+    <main class="page">
+      <section id="loading" class="login-card">
+        <p>正在检查登录状态……</p>
+      </section>
+
+      <section id="login-panel" class="login-card" hidden>
+        <a class="brand centered" href="/">木易斋</a>
+        <p class="subtitle">管理员登录</p>
+
+        <form id="login-form">
+          <label for="email">管理员邮箱</label>
+          <input id="email" type="email" placeholder="请输入管理员邮箱" autocomplete="email" required />
+          <button id="send-code" type="button">发送验证码</button>
+
+          <label for="code">邮箱验证码</label>
+          <input id="code" type="text" placeholder="请输入 6 位数字验证码" inputmode="numeric" maxlength="6" required />
+          <button id="login-button" type="submit">登录后台</button>
+          <p id="login-message" class="message" role="status"></p>
+        </form>
+
+        <a class="back-link" href="/">返回网站首页</a>
+      </section>
+
+      <section id="dashboard" hidden>
+        <header class="topbar">
+          <div>
+            <a class="brand" href="/">木易斋</a>
+            <span class="admin-label">管理后台</span>
+          </div>
+          <button id="logout-button" class="secondary-button" type="button">退出登录</button>
+        </header>
+
+        <div class="welcome">
+          <h1>文章管理</h1>
+          <p>以文字记录生活，以思考认识世界。</p>
+        </div>
+
+        <nav class="tabs">
+          <button class="tab active" data-tab="articles" type="button">已发布文章</button>
+          <button class="tab" data-tab="drafts" type="button">草稿箱</button>
+          <button class="tab" data-tab="editor" type="button">写文章</button>
+        </nav>
+
+        <section id="articles-section" class="content-panel">
+          <div class="section-heading">
+            <h2>已发布文章</h2>
+            <button id="refresh-articles" class="secondary-button" type="button">刷新列表</button>
+          </div>
+          <p id="articles-status" class="status"></p>
+          <div id="articles-list" class="item-list"></div>
+        </section>
+
+        <section id="drafts-section" class="content-panel" hidden>
+          <div class="section-heading">
+            <h2>草稿箱</h2>
+            <button id="refresh-drafts" class="secondary-button" type="button">刷新列表</button>
+          </div>
+          <p id="drafts-status" class="status"></p>
+          <div id="drafts-list" class="item-list"></div>
+        </section>
+
+        <section id="editor-section" class="content-panel" hidden>
+          <div class="section-heading">
+            <h2 id="editor-heading">新建文章</h2>
+            <button id="new-article" class="secondary-button" type="button">新建文章</button>
+          </div>
+
+          <form id="article-form">
+            <label for="article-title">文章标题</label>
+            <input id="article-title" maxlength="120" required placeholder="请输入文章标题" />
+
+            <label for="article-slug">文章标识（Slug）</label>
+            <input id="article-slug" maxlength="100" required placeholder="例如：my-first-article" />
+            <p class="hint">只能使用小写英文字母、数字和连字符，发布后用于文章网址。</p>
+
+            <label for="article-category">文章分类</label>
+            <input id="article-category" maxlength="50" required placeholder="例如：生活札记" />
+
+            <label for="article-description">文章摘要</label>
+            <textarea id="article-description" rows="3" maxlength="300" required placeholder="简单介绍这篇文章"></textarea>
+
+            <label for="article-date">发布日期</label>
+            <input id="article-date" type="date" required />
+
+            <label for="article-content">正文编辑工具</label>
+            <div class="format-toolbar" role="toolbar" aria-label="正文格式工具">
+              <button type="button" data-format="bold" title="加粗">粗体</button>
+              <button type="button" data-format="italic" title="斜体">斜体</button>
+              <button type="button" data-format="strike" title="删除线">删除线</button>
+              <span class="toolbar-divider"></span>
+              <button type="button" data-format="h2" title="二级标题">H2</button>
+              <button type="button" data-format="h3" title="三级标题">H3</button>
+              <button type="button" data-format="quote" title="引用">引用</button>
+              <button type="button" data-format="ul" title="无序列表">• 列表</button>
+              <button type="button" data-format="ol" title="有序列表">1. 列表</button>
+            </div>
+            <label for="article-content">正文内容</label>
+            <div class="image-tools">
+              <button id="insert-image" class="secondary-button" type="button">插入图片</button>
+              <input id="image-file" type="file" accept="image/jpeg,image/png,image/gif,image/webp" hidden />
+              <span class="hint">支持 JPG、PNG、GIF、WebP，单张不超过 5MB。上传后会自动插入正文。</span>
+            </div>
+            <textarea id="article-content" class="editor-textarea" rows="18" required placeholder="在这里写文章正文，支持 Markdown 格式……"></textarea>
+
+            <p id="editor-status" class="status" role="status"></p>
+
+            <div class="editor-actions">
+              <button id="save-draft" class="secondary-button" type="button">保存草稿</button>
+              <button id="publish-article" class="primary-button" type="button">发布文章</button>
+            </div>
+          </form>
+        </section>
+
+        <p class="footer-note">以文字记录生活，以思考认识世界。</p>
+      </section>
+    </main>
+
+    <script>
+      type ArticleData = {
+        slug: string;
+        title: string;
+        description: string;
+        category: string;
+        pubDate: string;
+        content: string;
+      };
+
+      const $ = <T extends HTMLElement>(selector: string) =>
+        document.querySelector<T>(selector)!;
+
+      const loading = $("#loading");
+      const loginPanel = $("#login-panel");
+      const dashboard = $("#dashboard");
+      const loginForm = $("#login-form");
+      const emailInput = $("#email");
+      const codeInput = $("#code");
+      const loginMessage = $("#login-message");
+      const sendButton = $("#send-code");
+      const loginButton = $("#login-button");
+      const logoutButton = $("#logout-button");
+
+      const articlesList = $("#articles-list");
+      const draftsList = $("#drafts-list");
+      const articlesStatus = $("#articles-status");
+      const draftsStatus = $("#drafts-status");
+      const editorStatus = $("#editor-status");
+
+      const titleInput = $("#article-title");
+      const slugInput = $("#article-slug");
+      const categoryInput = $("#article-category");
+      const descriptionInput = $("#article-description");
+      const dateInput = $("#article-date");
+      const contentInput = $("#article-content");
+      const insertImageButton = $("#insert-image");
+      const imageFileInput = $("#image-file");
+
+      function applyFormat(format: string) {
+        const start = contentInput.selectionStart;
+        const end = contentInput.selectionEnd;
+        const selected = contentInput.value.slice(start, end);
+        const before = contentInput.value.slice(0, start);
+        const after = contentInput.value.slice(end);
+        let replacement = "";
+        let cursor = start;
+
+        const wrap = (left: string, right = left) => {
+          replacement = selected ? left + selected + right : left + right;
+          cursor = selected ? start + replacement.length : start + left.length;
+        };
+
+        if (format === "bold") wrap("**");
+        else if (format === "italic") wrap("*");
+        else if (format === "strike") wrap("~~");
+        else if (format === "h2" || format === "h3") {
+          const prefix = format === "h2" ? "## " : "### ";
+          const lineStart = before.lastIndexOf("\n") + 1;
+          const lineEndIndex = contentInput.value.indexOf("\n", start);
+          const lineEnd = lineEndIndex === -1 ? contentInput.value.length : lineEndIndex;
+          const line = contentInput.value.slice(lineStart, lineEnd).replace(/^#{1,6}\s+/, "");
+          replacement = prefix + line;
+          contentInput.value = contentInput.value.slice(0, lineStart) + replacement + contentInput.value.slice(lineEnd);
+          cursor = lineStart + replacement.length;
+          contentInput.focus();
+          contentInput.setSelectionRange(cursor, cursor);
+          return;
+        } else if (format === "quote" || format === "ul" || format === "ol") {
+          const marker = format === "quote" ? "> " : format === "ul" ? "- " : "1. ";
+          const lines = (selected || "").split("\n");
+          replacement = lines.map(line => marker + line).join("\n");
+          if (!selected) replacement += " ";
+          cursor = start + replacement.length;
+        }
+
+        contentInput.value = before + replacement + after;
+        contentInput.focus();
+        if (selected) contentInput.setSelectionRange(start, start + replacement.length);
+        else contentInput.setSelectionRange(cursor, cursor);
+        contentInput.dispatchEvent(new Event("input", { bubbles: true }));
+      }
+
+      document.querySelectorAll<HTMLButtonElement>("[data-format]").forEach(button => {
+        button.addEventListener("click", () => applyFormat(button.dataset.format!));
+      });
+
+      const saveDraftButton = $("#save-draft");
+      const publishButton = $("#publish-article");
+
+      let editingMode: "new" | "article" | "draft" = "new";
+
+      function message(element: HTMLElement, text: string, error = false) {
+        element.textContent = text;
+        element.style.color = error ? "#b42318" : "#52745b";
+      }
+
+      async function api(url: string, options: RequestInit = {}) {
+        const response = await fetch(url, {
+          ...options,
+          credentials: "same-origin",
+          cache: "no-store",
+          headers: {
+            ...(options.body ? { "Content-Type": "application/json" } : {}),
+            ...options.headers,
+          },
+        });
+
+        const result = await response.json().catch(() => ({
+          success: false,
+          message: "服务器返回了无法识别的数据。",
+        }));
+
+        if (response.status === 401) {
+          showLogin();
+          throw new Error("登录状态已失效，请重新登录。");
+        }
+
+        if (!response.ok || result.success === false) {
+          throw new Error(result.message || `请求失败（${response.status}）`);
+        }
+
+        return result;
+      }
+
+      function showLogin() {
+        loading.hidden = true;
+        dashboard.hidden = true;
+        loginPanel.hidden = false;
+      }
+
+      async function showDashboard() {
+        loading.hidden = true;
+        loginPanel.hidden = true;
+        dashboard.hidden = false;
+
+        await Promise.all([
+          loadArticles(),
+          loadDrafts(),
+        ]);
+      }
+
+      async function checkSession() {
+        try {
+          const result = await api("/api/session");
+
+          if (result.loggedIn === true) {
+            await showDashboard();
+          } else {
+            showLogin();
+          }
+        } catch {
+          showLogin();
+        }
+      }
+
+      function switchTab(tab: string) {
+        document.querySelectorAll<HTMLElement>(".tab").forEach((button) => {
+          button.classList.toggle("active", button.dataset.tab === tab);
+        });
+
+        $("#articles-section").hidden = tab !== "articles";
+        $("#drafts-section").hidden = tab !== "drafts";
+        $("#editor-section").hidden = tab !== "editor";
+      }
+
+      document.querySelectorAll<HTMLButtonElement>(".tab").forEach((button) => {
+        button.addEventListener("click", () => switchTab(button.dataset.tab!));
+      });
+
+      sendButton.addEventListener("click", async () => {
+        const email = emailInput.value.trim();
+
+        if (!email) {
+          message(loginMessage, "请先输入管理员邮箱。", true);
+          emailInput.focus();
+          return;
+        }
+
+        sendButton.disabled = true;
+        message(loginMessage, "正在发送验证码……");
+
+        try {
+          const result = await api("/api/login", {
+            method: "POST",
+            body: JSON.stringify({ email }),
+          });
+
+          message(loginMessage, result.message || "验证码已发送，请检查邮箱。");
+        } catch (error) {
+          message(loginMessage, (error as Error).message, true);
+        } finally {
+          sendButton.disabled = false;
+        }
+      });
+
+      loginForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const email = emailInput.value.trim();
+        const code = codeInput.value.trim();
+
+        if (!/^\d{6}$/.test(code)) {
+          message(loginMessage, "请输入 6 位数字验证码。", true);
+          return;
+        }
+
+        loginButton.disabled = true;
+        message(loginMessage, "正在验证……");
+
+        try {
+          await api("/api/verify", {
+            method: "POST",
+            body: JSON.stringify({ email, code }),
+          });
+
+          await showDashboard();
+        } catch (error) {
+          message(loginMessage, (error as Error).message, true);
+        } finally {
+          loginButton.disabled = false;
+        }
+      });
+
+      logoutButton.addEventListener("click", async () => {
+        logoutButton.disabled = true;
+
+        try {
+          await api("/api/session", { method: "DELETE" });
+          loginForm.reset();
+          showLogin();
+        } catch (error) {
+          alert((error as Error).message);
+        } finally {
+          logoutButton.disabled = false;
+        }
+      });
+
+      function formatDate(date: string) {
+        return date || "未设置日期";
+      }
+
+      function createItem(
+        title: string,
+        detail: string,
+        onEdit: () => void,
+        onDelete: () => void,
+      ) {
+        const item = document.createElement("article");
+        item.className = "article-item";
+
+        const info = document.createElement("div");
+        info.className = "item-info";
+
+        const heading = document.createElement("h3");
+        heading.textContent = title;
+
+        const description = document.createElement("p");
+        description.textContent = detail;
+
+        info.append(heading, description);
+
+        const actions = document.createElement("div");
+        actions.className = "item-actions";
+
+        const editButton = document.createElement("button");
+        editButton.className = "secondary-button";
+        editButton.type = "button";
+        editButton.textContent = "编辑";
+        editButton.addEventListener("click", onEdit);
+
+        const deleteButton = document.createElement("button");
+        deleteButton.className = "danger-button";
+        deleteButton.type = "button";
+        deleteButton.textContent = "删除";
+        deleteButton.addEventListener("click", onDelete);
+
+        actions.append(editButton, deleteButton);
+        item.append(info, actions);
+
+        return item;
+      }
+
+      async function loadArticles() {
+        articlesList.replaceChildren();
+        message(articlesStatus, "正在读取文章……");
+
+        try {
+          const result = await api("/api/articles");
+          const articles = result.articles || [];
+
+          if (articles.length === 0) {
+            message(articlesStatus, "目前还没有已发布文章。");
+            return;
+          }
+
+          message(articlesStatus, `共 ${articles.length} 篇已发布文章。`);
+
+          articles.forEach((article: { slug: string; name?: string }) => {
+            const slug = article.slug;
+            const title = article.name || slug;
+
+            articlesList.append(
+              createItem(
+                title,
+                `文章标识：${slug}`,
+                () => loadArticle(slug),
+                () => deleteArticle(slug, title),
+              ),
+            );
+          });
+        } catch (error) {
+          message(articlesStatus, (error as Error).message, true);
+        }
+      }
+
+      async function loadDrafts() {
+        draftsList.replaceChildren();
+        message(draftsStatus, "正在读取草稿……");
+
+        try {
+          const result = await api("/api/drafts");
+          const drafts = result.drafts || [];
+
+          if (drafts.length === 0) {
+            message(draftsStatus, "草稿箱还是空的。");
+            return;
+          }
+
+          message(draftsStatus, `共 ${drafts.length} 篇草稿。`);
+
+          drafts.forEach((draft: ArticleData & { updatedAt?: string }) => {
+            draftsList.append(
+              createItem(
+                draft.title || draft.slug,
+                `${draft.category || "未分类"} · ${formatDate(draft.pubDate)}`,
+                () => loadDraft(draft.slug),
+                () => deleteDraft(draft.slug, draft.title),
+              ),
+            );
+          });
+        } catch (error) {
+          message(draftsStatus, (error as Error).message, true);
+        }
+      }
+
+      function openEditor(
+        data?: Partial<ArticleData>,
+        mode: "new" | "article" | "draft" = "new",
+      ) {
+        editingMode = mode;
+
+        titleInput.value = data?.title || "";
+        slugInput.value = data?.slug || "";
+        categoryInput.value = data?.category || "生活札记";
+        descriptionInput.value = data?.description || "";
+        dateInput.value = data?.pubDate || new Date().toISOString().slice(0, 10);
+        contentInput.value = data?.content || "";
+
+        $("#editor-heading").textContent =
+          mode === "article" ? "编辑已发布文章" :
+          mode === "draft" ? "编辑草稿" : "新建文章";
+
+        message(editorStatus, "");
+        switchTab("editor");
+      }
+
+      async function loadArticle(slug: string) {
+        message(articlesStatus, "正在读取文章内容……");
+
+        try {
+          const result = await api(`/api/articles?slug=${encodeURIComponent(slug)}`);
+          const markdown = result.article?.markdown;
+
+          if (typeof markdown !== "string") {
+            throw new Error("服务器没有返回文章正文。");
+          }
+
+          const data = parseMarkdown(markdown, slug);
+          openEditor(data, "article");
+        } catch (error) {
+          message(articlesStatus, (error as Error).message, true);
+        }
+      }
+
+      async function loadDraft(slug: string) {
+        try {
+          const result = await api(`/api/drafts?slug=${encodeURIComponent(slug)}`);
+          openEditor(result.draft, "draft");
+        } catch (error) {
+          message(draftsStatus, (error as Error).message, true);
+        }
+      }
+
+      function parseMarkdown(markdown: string, slug: string): ArticleData {
+        const match = markdown.match(/^---\s*\r?\n([\s\S]*?)\r?\n---\s*\r?\n?([\s\S]*)$/);
+
+        if (!match) {
+          throw new Error("文章格式无法识别，请检查 Markdown 文件的 Frontmatter。");
+        }
+
+        const frontmatter = match[1];
+        const content = match[2];
+
+        function readField(key: string) {
+          const line = frontmatter.match(new RegExp(`^${key}:\\s*(.*)$`, "m"));
+          if (!line) return "";
+
+          const value = line[1].trim();
+
+          try {
+            return JSON.parse(value);
+          } catch {
+            return value.replace(/^["']|["']$/g, "");
+          }
+        }
+
+        return {
+          slug,
+          title: readField("title"),
+          description: readField("description"),
+          category: readField("category"),
+          pubDate: String(readField("pubDate")).slice(0, 10),
+          content,
+        };
+      }
+
+      function readEditor(): ArticleData | null {
+        const data: ArticleData = {
+          slug: slugInput.value.trim(),
+          title: titleInput.value.trim(),
+          description: descriptionInput.value.trim(),
+          category: categoryInput.value.trim(),
+          pubDate: dateInput.value,
+          content: contentInput.value.replace(/\\n/g, "\n"),
+        };
+
+        if (!data.slug || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(data.slug)) {
+          message(editorStatus, "文章标识只能包含小写英文字母、数字和连字符。", true);
+          slugInput.focus();
+          return null;
+        }
+
+        if (!data.title || data.title.length > 120) {
+          message(editorStatus, "请填写文章标题，且标题不能超过 120 个字符。", true);
+          titleInput.focus();
+          return null;
+        }
+
+        if (!data.description || data.description.length > 300) {
+          message(editorStatus, "请填写文章摘要，且摘要不能超过 300 个字符。", true);
+          descriptionInput.focus();
+          return null;
+        }
+
+        if (!data.category || data.category.length > 50) {
+          message(editorStatus, "请填写文章分类，且分类不能超过 50 个字符。", true);
+          categoryInput.focus();
+          return null;
+        }
+
+        if (!data.pubDate) {
+          message(editorStatus, "请选择发布日期。", true);
+          dateInput.focus();
+          return null;
+        }
+
+        if (!data.content.trim() || data.content.length > 100000) {
+          message(editorStatus, "请填写正文，且正文不能超过 100000 个字符。", true);
+          contentInput.focus();
+          return null;
+        }
+
+        return data;
+      }
+
+      async function saveDraft() {
+        const data = readEditor();
+        if (!data) return;
+
+        saveDraftButton.disabled = true;
+        publishButton.disabled = true;
+        message(editorStatus, "正在保存草稿……");
+
+        try {
+          const result = await api("/api/drafts", {
+            method: "POST",
+            body: JSON.stringify(data),
+          });
+
+          editingMode = "draft";
+          message(editorStatus, result.message || "草稿保存成功。");
+
+          await loadDrafts();
+        } catch (error) {
+          message(editorStatus, (error as Error).message, true);
+        } finally {
+          saveDraftButton.disabled = false;
+          publishButton.disabled = false;
+        }
+      }
+
+      async function publishArticle() {
+        const data = readEditor();
+        if (!data) return;
+
+        saveDraftButton.disabled = true;
+        publishButton.disabled = true;
+        message(editorStatus, "正在发布文章……");
+
+        try {
+          const action = editingMode === "article" ? "update" : "create";
+
+          const result = await api("/api/articles", {
+            method: "POST",
+            body: JSON.stringify({ ...data, action }),
+          });
+
+          if (editingMode === "draft") {
+            try {
+              await api("/api/drafts", {
+                method: "DELETE",
+                body: JSON.stringify({ slug: data.slug }),
+              });
+
+              message(editorStatus, "文章发布成功，原草稿已删除。");
+            } catch (error) {
+              message(
+                editorStatus,
+                "文章已经发布成功，但原草稿删除失败。请稍后到草稿列表手动删除。",
+                true,
+              );
+            }
+          } else {
+            message(editorStatus, result.message || "文章发布成功。");
+          }
+
+          editingMode = "article";
+
+          await Promise.all([
+            loadArticles(),
+            loadDrafts(),
+          ]);
+        } catch (error) {
+          message(
+            editorStatus,
+            (error as Error).message || "文章发布失败，请稍后重试。",
+            true,
+          );
+        } finally {
+          saveDraftButton.disabled = false;
+          publishButton.disabled = false;
+        }
+      }
+
+      async function deleteArticle(slug: string, title: string) {
+        if (!confirm(`确定删除已发布文章「${title}」吗？此操作不可撤销。`)) return;
+
+        try {
+          const result = await api("/api/articles", {
+            method: "DELETE",
+            body: JSON.stringify({ slug }),
+          });
+
+          message(articlesStatus, result.message || "文章已删除。");
+          await loadArticles();
+        } catch (error) {
+          message(articlesStatus, (error as Error).message, true);
+        }
+      }
+
+      async function deleteDraft(slug: string, title: string) {
+        if (!confirm(`确定删除草稿「${title}」吗？此操作不可撤销。`)) return;
+
+        try {
+          const result = await api("/api/drafts", {
+            method: "DELETE",
+            body: JSON.stringify({ slug }),
+          });
+
+          message(draftsStatus, result.message || "草稿已删除。");
+          await loadDrafts();
+        } catch (error) {
+          message(draftsStatus, (error as Error).message, true);
+        }
+      }
+
+      insertImageButton.addEventListener("click", () => imageFileInput.click());
+
+      imageFileInput.addEventListener("change", async () => {
+        const file = imageFileInput.files?.[0];
+        if (!file) return;
+
+        if (file.size > 5 * 1024 * 1024) {
+          message(editorStatus, "图片不能超过 5MB。", true);
+          imageFileInput.value = "";
+          return;
+        }
+
+        insertImageButton.disabled = true;
+        message(editorStatus, "正在上传图片……");
+
+        try {
+          const base64 = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+              const result = String(reader.result || "");
+              const comma = result.indexOf(",");
+              if (comma < 0) reject(new Error("无法读取图片文件。"));
+              else resolve(result.slice(comma + 1));
+            };
+            reader.onerror = () => reject(new Error("读取图片失败。"));
+            reader.readAsDataURL(file);
+          });
+
+          const result = await api("/api/images", {
+            method: "POST",
+            body: JSON.stringify({ image: base64 }),
+          });
+
+          const alt = file.name.replace(/[\[\]\n\r]/g, "").slice(0, 100) || "文章图片";
+          const markdown = `![${alt}](${result.url})`;
+          const start = contentInput.selectionStart;
+          const end = contentInput.selectionEnd;
+          const before = contentInput.value.slice(0, start);
+          const after = contentInput.value.slice(end);
+          const prefix = before && !before.endsWith("\n") ? "\n\n" : "";
+          const suffix = after && !after.startsWith("\n") ? "\n\n" : "\n";
+          contentInput.value = before + prefix + markdown + suffix + after;
+          contentInput.focus();
+          const cursor = (before + prefix + markdown + suffix).length;
+          contentInput.setSelectionRange(cursor, cursor);
+          message(editorStatus, "图片上传成功，已插入正文。");
+        } catch (error) {
+          message(editorStatus, (error as Error).message || "图片上传失败。", true);
+        } finally {
+          insertImageButton.disabled = false;
+          imageFileInput.value = "";
+        }
+      });
+
+      $("#refresh-articles").addEventListener("click", loadArticles);
+      $("#refresh-drafts").addEventListener("click", loadDrafts);
+      $("#new-article").addEventListener("click", () => openEditor());
+      saveDraftButton.addEventListener("click", saveDraft);
+      publishButton.addEventListener("click", publishArticle);
+
+      checkSession();
+    </script>
+  </body>
+</html>
+
+<style>
+  * {
+    box-sizing: border-box;
+  }
+
+  [hidden] {
+    display: none !important;
+  }
+
+  body {
+    margin: 0;
+    background: #f7f6f2;
+    color: #292929;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+
+  .page {
+    min-height: 100vh;
+    padding: 36px 24px;
+  }
+
+  .login-card {
+    width: 100%;
+    max-width: 380px;
+    margin: 10vh auto 0;
+    padding: 42px 32px;
+    border: 1px solid #e9e7e0;
+    border-radius: 8px;
+    background: #fff;
+  }
+
+  .brand {
+    color: #292929;
+    font-family: serif;
+    font-size: 28px;
+    text-decoration: none;
+  }
+
+  .centered {
+    display: block;
+    text-align: center;
+  }
+
+  .subtitle {
+    margin: 10px 0 32px;
+    color: #888;
+    font-size: 14px;
+    text-align: center;
+  }
+
+  label {
+    display: block;
+    margin: 20px 0 8px;
+    font-size: 14px;
+  }
+
+  input,
+  textarea {
+    width: 100%;
+    padding: 12px;
     border: 1px solid #ddd;
-    border-radius: 6px;
+    border-radius: 5px;
     background: #fff;
     color: #292929;
-    font-size: 16px;
-    line-height: 1.8;
+    font: inherit;
+    font-size: 14px;
     outline: none;
   }
-  .tiptap-editor:focus { border-color: #8b735c; }
-  .tiptap-content { min-height: 380px; outline: none; }
-  .tiptap-content p { margin: 0 0 14px; }
-  .tiptap-content img { display:block; max-width:100%; max-height:620px; height:auto; margin:18px auto; }
-  .format-toolbar select { min-height:34px; border:1px solid #ddd; border-radius:4px; background:#fff; padding:4px; }
-  .editor-textarea, .tiptap-editor {
+
+  input {
+    height: 44px;
+  }
+
+  input:focus,
+  textarea:focus {
+    border-color: #777;
+  }
+
+  button {
+    cursor: pointer;
+    font: inherit;
+  }
+
+  button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  #send-code,
+  #login-button,
+  .primary-button {
+    min-height: 42px;
+    padding: 0 18px;
+    border: 0;
+    border-radius: 5px;
+    background: #333;
+    color: #fff;
+    font-size: 14px;
+  }
+
+  #send-code,
+  #login-button {
+    width: 100%;
+    margin-top: 16px;
+  }
+
+  #login-button {
+    margin-top: 22px;
+  }
+
+  .message,
+  .status {
+    min-height: 22px;
+    color: #777;
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  .back-link {
+    display: block;
+    margin-top: 20px;
+    color: #888;
+    font-size: 13px;
+    text-align: center;
+    text-decoration: none;
+  }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding-bottom: 22px;
+    border-bottom: 1px solid #e5e2da;
+  }
+
+  .admin-label {
+    margin-left: 12px;
+    color: #888;
+    font-size: 13px;
+  }
+
+  .secondary-button,
+  .danger-button {
+    padding: 9px 14px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background: transparent;
+    color: #555;
+    font-size: 13px;
+  }
+
+  .danger-button {
+    border-color: #ead5d2;
+    color: #a33b32;
+  }
+
+  .welcome,
+  .tabs,
+  .content-panel {
+    max-width: 1000px;
+    margin-right: auto;
+    margin-left: auto;
+  }
+
+  .welcome {
+    margin-top: 46px;
+    margin-bottom: 28px;
+  }
+
+  .welcome h1 {
+    margin: 0 0 10px;
+    font-family: serif;
+    font-size: 30px;
+    font-weight: 500;
+  }
+
+  .welcome p,
+  .hint {
+    color: #888;
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #e5e2da;
+  }
+
+  .tab {
+    padding: 12px 18px;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    background: transparent;
+    color: #777;
+    font-size: 14px;
+  }
+
+  .tab.active {
+    border-bottom-color: #333;
+    color: #292929;
+  }
+
+  .content-panel {
+    padding: 28px;
+    border: 1px solid #e9e7e0;
+    border-radius: 7px;
+    background: #fff;
+  }
+
+  .section-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+
+  .section-heading h2 {
+    margin: 0;
+    font-family: serif;
+    font-size: 22px;
+    font-weight: 500;
+  }
+
+  .article-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 18px 0;
+    border-top: 1px solid #eee;
+  }
+
+  .item-info {
+    min-width: 0;
+  }
+
+  .item-info h3 {
+    margin: 0 0 7px;
+    font-size: 15px;
+    font-weight: 500;
+    overflow-wrap: anywhere;
+  }
+
+  .item-info p {
+    margin: 0;
+    color: #999;
+    font-size: 12px;
+    overflow-wrap: anywhere;
+  }
+
+  .item-actions {
+    display: flex;
+    flex-shrink: 0;
+    gap: 8px;
+  }
+
+  #article-form {
+    max-width: 760px;
+  }
+
+  #article-form label {
+    margin-top: 20px;
+  }
+
+  .editor-textarea {
     min-height: 360px;
     resize: vertical;
     font-family: Consolas, "Courier New", monospace;
