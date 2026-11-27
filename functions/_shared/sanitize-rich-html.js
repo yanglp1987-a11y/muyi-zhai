@@ -2,8 +2,8 @@ const ALLOWED_TAGS = new Set(["p","br","h1","h2","h3","strong","b","em","i","u",
 const VOID_TAGS = new Set(["br","img"]);
 const DANGEROUS_TAGS = new Set(["script","style","iframe","object","embed","svg","math","template","noscript"]);
 const FONT_SIZES = new Set(["12pt","14pt","16pt","18pt","20pt","24pt","28pt","32pt"]);
-const IMAGE_PATH = /^\/images\/articles\/[a-f0-9-]{36}\.(?:jpe?g|png|gif|webp)$/i;
-const PAGES_IMAGE_URL = /^https:\/\/muyi-zhai\.pages\.dev\/images\/articles\/[a-f0-9-]{36}\.(?:jpe?g|png|gif|webp)$/i;
+const IMAGE_PATH = /^\/images\/articles\/[a-f0-9-]{36}\.(?:jpe?g|png|gif|webp)(?:\?v=\d{1,16})?$/i;
+const PAGES_IMAGE_URL = /^https:\/\/muyi-zhai\.pages\.dev\/images\/articles\/[a-f0-9-]{36}\.(?:jpe?g|png|gif|webp)(?:\?v=\d{1,16})?$/i;
 
 function escapeText(value) {
   return value.replace(/&(?!(?:#\d+|#x[0-9a-f]+|[a-z][a-z0-9]+);)/gi, "&amp;")
@@ -52,6 +52,9 @@ function safeStyle(style, tag) {
     const value = declaration.slice(colon + 1).trim().toLowerCase();
     if (name === "font-size" && FONT_SIZES.has(value)) output.push("font-size: " + value);
     if (name === "color" && /^#[0-9a-f]{6}$/i.test(value)) output.push("color: " + value);
+    if (tag === "img" && name === "width" && /^(25|50|75|100)%$/.test(value)) output.push("width: " + value);
+    if (tag === "img" && name === "height" && value === "auto") output.push("height: auto");
+    if (tag === "img" && name === "max-width" && value === "100%") output.push("max-width: 100%");
     if ((tag === "p" || tag === "h1" || tag === "h2" || tag === "h3") &&
         name === "text-align" && ["left","center","right"].includes(value)) output.push("text-align: " + value);
   }
@@ -77,7 +80,7 @@ function serializeAttrs(tag, attrs) {
     if (attrs.width && /^\d{1,4}$/.test(attrs.width) && Number(attrs.width) > 0) out.push('width="' + attrs.width + '"');
     if (attrs.height && /^\d{1,4}$/.test(attrs.height) && Number(attrs.height) > 0) out.push('height="' + attrs.height + '"');
   }
-  if (["p","h1","h2","h3","span"].includes(tag) && attrs.style) {
+  if (["p","h1","h2","h3","span","img"].includes(tag) && attrs.style) {
     const style = safeStyle(attrs.style, tag);
     if (style) out.push('style="' + style + '"');
   }
