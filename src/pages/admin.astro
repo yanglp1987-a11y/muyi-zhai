@@ -124,6 +124,12 @@ export const prerender = true;
               <button id="insert-image" class="secondary-button" type="button">插入图片</button>
               <input id="image-file" type="file" accept="image/jpeg,image/png,image/gif,image/webp" hidden />
               <span class="hint">支持 JPG、PNG、GIF、WebP，单张不超过 5MB。</span>
+              <label class="image-size-label" for="editor-image-size">图片宽度</label>
+              <select id="editor-image-size" aria-label="选中图片宽度" disabled>
+                <option value="25">25%</option><option value="50">50%</option>
+                <option value="75" selected>75%</option><option value="100">100%</option>
+              </select>
+              <button id="remove-editor-image" class="secondary-button" type="button" disabled>删除图片</button>
             </div>
             <div id="article-editor" class="rich-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="文章正文" data-placeholder="在这里写文章正文……"></div>
             <textarea id="article-content" hidden></textarea>
@@ -190,6 +196,8 @@ export const prerender = true;
       const richEditor = $("#article-editor");
       const insertImageButton = $("#insert-image");
       const imageFileInput = $("#image-file");
+      const imageSizeSelect = $("#editor-image-size");
+      const removeEditorImageButton = $("#remove-editor-image");
 
       function applyFormat(format: string) {
         const commandMap: Record<string, () => void> = {
@@ -224,11 +232,53 @@ export const prerender = true;
         },
       });
 
+      const ResizableImage = Image.extend({
+        addAttributes() {
+          return {
+            ...this.parent?.(),
+            widthPercent: {
+              default: 75,
+              parseHTML: element => {
+                const match = (element as HTMLElement).style.width.match(/^(25|50|75|100)%$/);
+                return match ? Number(match[1]) : 75;
+              },
+              renderHTML: attrs => ({
+                style: `width: ${[25, 50, 75, 100].includes(Number(attrs.widthPercent)) ? Number(attrs.widthPercent) : 75}%; height: auto; max-width: 100%;`,
+              }),
+            },
+          };
+        },
+      });
+
       editor = new Editor({
         element: richEditor,
-        extensions: [StarterKit, FontSize, Color, Underline, TextAlign.configure({ types: ["heading", "paragraph"] }), Image],
+        extensions: [StarterKit, FontSize, Color, Underline, TextAlign.configure({ types: ["heading", "paragraph"] }), ResizableImage],
         content: "",
         onUpdate: syncEditorContent,
+        onSelectionUpdate: ({ editor: currentEditor }) => {
+          const selectedImage = currentEditor.isActive("image");
+          imageSizeSelect.disabled = !selectedImage;
+          removeEditorImageButton.disabled = !selectedImage;
+          if (selectedImage) {
+            const attrs = currentEditor.getAttributes("image");
+            imageSizeSelect.value = [25, 50, 75, 100].includes(Number(attrs.widthPercent)) ? String(attrs.widthPercent) : "75";
+          }
+        },
+      });
+
+      imageSizeSelect.addEventListener("change", () => {
+        const widthPercent = Number(imageSizeSelect.value);
+        if ([25, 50, 75, 100].includes(widthPercent)) {
+          editor?.chain().focus().updateAttributes("image", { widthPercent }).run();
+          syncEditorContent();
+        }
+      });
+
+      removeEditorImageButton.addEventListener("click", () => {
+        if (editor?.isActive("image")) {
+          editor.chain().focus().deleteSelection().run();
+          syncEditorContent();
+        }
       });
 
       document.querySelectorAll<HTMLButtonElement>("[data-format]").forEach(button => {
@@ -801,7 +851,9 @@ export const prerender = true;
           });
 
           const alt = file.name.replace(/[\[\]\n\r]/g, "").slice(0, 100) || "文章图片";
-          editor?.chain().focus().setImage({ src: result.url, alt }).run();
+          const imageUrl = new URL(result.url, window.location.origin);
+          imageUrl.searchParams.set("v", String(Date.now()));
+          editor?.chain().focus().setImage({ src: imageUrl.toString(), alt, widthPercent: 75 }).run();
           syncEditorContent();
           message(editorStatus, "图片上传成功，已插入正文。");
         } catch (error) {
@@ -1142,6 +1194,32 @@ export const prerender = true;
 
   .image-tools .hint {
     margin: 0;
+  }
+
+  .image-size-label {
+    display: inline;
+    margin: 0 0 0 8px !important;
+    font-size: 12px;
+    color: #777;
+  }
+
+  #editor-image-size {
+    width: auto;
+    height: 34px;
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+
+  .rich-editor img {
+    display: block;
+    height: auto;
+    max-width: 100%;
+    cursor: pointer;
+  }
+
+  .rich-editor img.ProseMirror-selectednode {
+    outline: 2px solid #8b735c;
+    outline-offset: 2px;
   }
 
   .hint {
