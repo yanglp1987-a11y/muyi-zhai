@@ -1,9 +1,28 @@
 const OWNER = "yanglp1987-a11y";
 const REPO = "muyi-zhai";
-const BRANCH = "main";
 const IMAGE_PATH = "public/images/articles";
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const CACHE_MAX_AGE = 31536000;
+
+// 图片读取分支必须由当前环境显式配置。绝不回退到 main：
+// 未配置、格式异常或与环境分支不一致时返回 null，由调用方安全失败。
+function getWriteBranch(env) {
+  const value = typeof env?.GITHUB_WRITE_BRANCH === "string"
+    ? env.GITHUB_WRITE_BRANCH.trim()
+    : "";
+  if (!value) return null;
+  if (!/^[A-Za-z0-9][A-Za-z0-9._/-]{0,99}$/.test(value) ||
+      value.includes("..") || value.includes("//")) {
+    return null;
+  }
+  // CF_PAGES_BRANCH 在 Pages 构建阶段注入；若运行时可用，必须与之匹配。
+  const pagesBranch = env.CF_PAGES_BRANCH;
+  if (typeof pagesBranch === "string" && pagesBranch.trim() &&
+      pagesBranch.trim() !== value) {
+    return null;
+  }
+  return value;
+}
 
 const FILENAME_RE = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\.(?:png|jpe?g|gif|webp)$/i;
 const CONTENT_TYPES = {
@@ -26,13 +45,15 @@ function contentTypeFor(filename) {
   return CONTENT_TYPES[ext] || "application/octet-stream";
 }
 
-function etagFor(filename) {
-  return `W/"${filename}"`;
+// 缓存标识和 ETag 都包含分支，避免不同分支的同名图片串用。
+function etagFor(filename, branch) {
+  return `W/"${filename}-${branch}"`;
 }
 
-function makeCacheKey(request) {
+function makeCacheKey(request, branch) {
   const url = new URL(request.url);
   url.search = "";
+  url.searchParams.set("branch", branch);
   return new Request(url.toString(), { method: "GET", headers: { Accept: "image/*" } });
 }
 
@@ -84,7 +105,12 @@ export async function onRequest(context) {
     return json({ error: "Invalid image filename" }, 400);
   }
 
-  const etag = etagFor(filename);
+  const branch = getWriteBranch(env);
+  if (!branch) {
+    return json({ error: "图片服务分支配置异常" }, 503);
+  }
+
+  const etag = etagFor(filename, branch);
   const cache = globalThis.caches?.default;
 
   const ifNoneMatch = request.headers.get("If-None-Match");
@@ -100,7 +126,7 @@ export async function onRequest(context) {
 
   if (cache) {
     try {
-      const cached = await cache.match(makeCacheKey(request));
+      const cached = await cache.match(makeCacheKey(request, branch));
       if (cached) {
         const headers = new Headers(cached.headers);
         headers.set("X-Image-Proxy-Cache", "HIT");
@@ -116,7 +142,7 @@ export async function onRequest(context) {
     return json({ error: "图片服务暂不可用" }, 503);
   }
 
-  const upstreamUrl = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${IMAGE_PATH}/${filename}?ref=${encodeURIComponent(BRANCH)}`;
+  const upstreamUrl = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${IMAGE_PATH}/${filename}?ref=${encodeURIComponent(branch)}`;
 
   let upstream;
   try {
@@ -227,7 +253,7 @@ export async function onRequest(context) {
       // 5MB guard) must not surface as an unhandled rejection, and a partial
       // body must never be stored.
       context.waitUntil?.(
-        Promise.resolve(cache.put(makeCacheKey(request), response.clone())).catch(() => {}),
+        Promise.resolve(cache.put(makeCacheKey(request, branch), response.clone())).catch(() => {}),
       );
     } catch {
       // Cache API unavailable: never break the image response.

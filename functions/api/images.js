@@ -1,9 +1,28 @@
 const OWNER = "yanglp1987-a11y";
 const REPO = "muyi-zhai";
-const BRANCH = "main";
 const IMAGE_PATH = "public/images/articles";
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const MAX_REQUEST_BYTES = 7 * 1024 * 1024;
+
+// GitHub 写入分支必须由当前环境显式配置。绝不回退到 main：
+// 未配置、格式异常或与环境分支不一致时返回 null，由调用方安全失败。
+function getWriteBranch(env) {
+  const value = typeof env?.GITHUB_WRITE_BRANCH === "string"
+    ? env.GITHUB_WRITE_BRANCH.trim()
+    : "";
+  if (!value) return null;
+  if (!/^[A-Za-z0-9][A-Za-z0-9._/-]{0,99}$/.test(value) ||
+      value.includes("..") || value.includes("//")) {
+    return null;
+  }
+  // CF_PAGES_BRANCH 在 Pages 构建阶段注入；若运行时可用，必须与之匹配。
+  const pagesBranch = env.CF_PAGES_BRANCH;
+  if (typeof pagesBranch === "string" && pagesBranch.trim() &&
+      pagesBranch.trim() !== value) {
+    return null;
+  }
+  return value;
+}
 
 function json(data, status = 200) {
   return Response.json(data, {
@@ -83,6 +102,11 @@ export async function onRequestPost({ request, env }) {
       return json({ success: false, message: "请先登录" }, 401);
     }
 
+    const branch = getWriteBranch(env);
+    if (!branch) {
+      return json({ success: false, message: "服务器分支配置异常" }, 503);
+    }
+
     const contentType = request.headers.get("Content-Type") || "";
     if (!/^application\/json(?:\s*;|$)/i.test(contentType)) {
       return json({ success: false, message: "请求格式不正确" }, 400);
@@ -130,7 +154,7 @@ export async function onRequestPost({ request, env }) {
         body: JSON.stringify({
           message: "上传文章图片",
           content: encoded,
-          branch: BRANCH
+          branch
         })
       }
     );

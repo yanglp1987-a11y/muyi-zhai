@@ -2,12 +2,35 @@ import { sanitizeRichHtml } from "../_shared/sanitize-rich-html.js";
 
 const OWNER = "yanglp1987-a11y";
 const REPO = "muyi-zhai";
-const BRANCH = "main";
 const ARTICLE_PATH = "src/content/articles";
 
 const MAX_BODY_SIZE = 110000;
 const GITHUB_PAGE_SIZE = 100;
 const GITHUB_MAX_PAGES = 10;
+
+// GitHub 读写分支必须由当前环境显式配置。绝不回退到 main：
+// 未配置、格式异常或与环境分支不一致时返回 null，由调用方安全失败。
+function getWriteBranch(env) {
+  const value = typeof env?.GITHUB_WRITE_BRANCH === "string"
+    ? env.GITHUB_WRITE_BRANCH.trim()
+    : "";
+  if (!value) return null;
+  if (!/^[A-Za-z0-9][A-Za-z0-9._/-]{0,99}$/.test(value) ||
+      value.includes("..") || value.includes("//")) {
+    return null;
+  }
+  // CF_PAGES_BRANCH 在 Pages 构建阶段注入；若运行时可用，必须与之匹配。
+  const pagesBranch = env.CF_PAGES_BRANCH;
+  if (typeof pagesBranch === "string" && pagesBranch.trim() &&
+      pagesBranch.trim() !== value) {
+    return null;
+  }
+  return value;
+}
+
+function invalidBranchResponse() {
+  return json({ success: false, message: "服务器分支配置异常" }, 503);
+}
 
 function json(data, status = 200) {
   return Response.json(data, {
@@ -122,13 +145,18 @@ async function readBody(request) {
   }
 }
 
-async function githubRequest(env, path, options = {}) {
+async function githubRequest(env, branch, path, options = {}) {
   if (!env.GITHUB_TOKEN) {
     throw new Error("GitHub token not configured");
   }
 
+  const method = (options.method || "GET").toUpperCase();
+  const url = new URL(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${path}`);
+  // 所有读取都必须显式指定分支，避免落到仓库默认分支 main。
+  if (method === "GET" && branch) url.searchParams.set("ref", branch);
+
   return await fetch(
-    `https://api.github.com/repos/${OWNER}/${REPO}/contents/${path}`,
+    url.toString(),
     {
       ...options,
       headers: {
@@ -220,7 +248,7 @@ function decodeBase64(base64) {
 }
 
 // 读取已发布文章列表，支持最多 1000 个目录条目
-async function getArticleList(env) {
+async function getArticleList(env, branch) {
   const articles = [];
 
   for (let page = 1; page <= GITHUB_MAX_PAGES; page++) {
@@ -228,6 +256,7 @@ async function getArticleList(env) {
 
     const response = await githubRequest(
       env,
+      branch,
       `${ARTICLE_PATH}${query}`
     );
 
@@ -287,6 +316,9 @@ export async function onRequestGet({ request, env }) {
       );
     }
 
+    const branch = getWriteBranch(env);
+    if (!branch) return invalidBranchResponse();
+
     const url = new URL(request.url);
     const slug = url.searchParams.get("slug");
 
@@ -299,7 +331,7 @@ export async function onRequestGet({ request, env }) {
       }
 
       const path = `${ARTICLE_PATH}/${slug}.md`;
-      const response = await githubRequest(env, path);
+      const response = await githubRequest(env, branch, path);
 
       if (response.status === 404) {
         return json(
@@ -328,7 +360,7 @@ export async function onRequestGet({ request, env }) {
       });
     }
 
-    const result = await getArticleList(env);
+    const result = await getArticleList(env, branch);
 
     if (!result.success) {
       return json(
@@ -365,6 +397,9 @@ export async function onRequestPost({ request, env }) {
         401
       );
     }
+
+    const branch = getWriteBranch(env);
+    if (!branch) return invalidBranchResponse();
 
     stage = "validate-content-type";
     if (!isJsonRequest(request)) {
@@ -406,7 +441,7 @@ export async function onRequestPost({ request, env }) {
     // 创建时检查文章是否已经存在
     if (article.action === "create") {
       stage = "github-check-existing";
-      const existing = await githubRequest(env, path);
+      const existing = await githubRequest(env, branch, path);
       if (!existing.ok && existing.status !== 404) {
         console.error("[articles-api] GitHub existence check failed", {
           status: existing.status
@@ -439,7 +474,7 @@ export async function onRequestPost({ request, env }) {
     // 修改时取得原文件 SHA
     if (article.action === "update") {
       stage = "github-read-existing";
-      const existing = await githubRequest(env, path);
+      const existing = await githubRequest(env, branch, path);
 
       if (existing.status === 404) {
         return json(
@@ -473,14 +508,14 @@ export async function onRequestPost({ request, env }) {
     const encodedContent = encodeBase64(markdown);
 
     stage = "github-write-article";
-    const response = await githubRequest(env, path, {
+    const response = await githubRequest(env, branch, path, {
       method: "PUT",
       body: JSON.stringify({
         message: article.action === "create"
           ? `新增文章：${article.title.trim()}`
           : `修改文章：${article.title.trim()}`,
         content: encodedContent,
-        branch: BRANCH,
+        branch,
         ...(sha ? { sha } : {})
       })
     });
@@ -535,6 +570,9 @@ export async function onRequestDelete({ request, env }) {
       );
     }
 
+    const branch = getWriteBranch(env);
+    if (!branch) return invalidBranchResponse();
+
     if (!isJsonRequest(request)) {
       return json(
         { success: false, message: "请求格式不正确" },
@@ -552,7 +590,7 @@ export async function onRequestDelete({ request, env }) {
     }
 
     const path = `${ARTICLE_PATH}/${body.slug}.md`;
-    const existing = await githubRequest(env, path);
+    const existing = await githubRequest(env, branch, path);
 
     if (existing.status === 404) {
       return json(
@@ -577,12 +615,12 @@ export async function onRequestDelete({ request, env }) {
       );
     }
 
-    const response = await githubRequest(env, path, {
+    const response = await githubRequest(env, branch, path, {
       method: "DELETE",
       body: JSON.stringify({
         message: `删除文章：${body.slug}`,
         sha: file.sha,
-        branch: BRANCH
+        branch
       })
     });
 
