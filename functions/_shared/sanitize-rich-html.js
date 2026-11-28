@@ -4,6 +4,7 @@ const DANGEROUS_TAGS = new Set(["script","style","iframe","object","embed","svg"
 const FONT_SIZES = new Set(["12pt","14pt","16pt","18pt","20pt","24pt","28pt","32pt"]);
 const IMAGE_PATH = /^\/images\/articles\/[a-f0-9-]{36}\.(?:jpe?g|png|gif|webp)(?:\?v=\d{1,16})?$/i;
 const PAGES_IMAGE_URL = /^https:\/\/muyi-zhai\.pages\.dev\/images\/articles\/[a-f0-9-]{36}\.(?:jpe?g|png|gif|webp)(?:\?v=\d{1,16})?$/i;
+const GITHUB_RAW_IMAGE_URL = /^https:\/\/raw\.githubusercontent\.com\/yanglp1987-a11y\/muyi-zhai\/main\/public\/images\/articles\/[a-f0-9-]{36}\.(?:jpe?g|png|gif|webp)(?:\?v=\d{1,16})?$/i;
 
 function escapeText(value) {
   return value.replace(/&(?!(?:#\d+|#x[0-9a-f]+|[a-z][a-z0-9]+);)/gi, "&amp;")
@@ -74,7 +75,7 @@ function serializeAttrs(tag, attrs) {
   const out = [];
   if (tag === "img") {
     const src = attrs.src || "";
-    if (!IMAGE_PATH.test(src) && !PAGES_IMAGE_URL.test(src)) return null;
+    if (!IMAGE_PATH.test(src) && !PAGES_IMAGE_URL.test(src) && !GITHUB_RAW_IMAGE_URL.test(src)) return null;
     out.push('src="' + src + '"');
     if (attrs.alt) out.push('alt="' + escapeText(attrs.alt.slice(0,200)) + '"');
     if (attrs.width && /^\d{1,4}$/.test(attrs.width) && Number(attrs.width) > 0) out.push('width="' + attrs.width + '"');
