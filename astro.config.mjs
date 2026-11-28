@@ -1,6 +1,7 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import { unified } from '@astrojs/markdown-remark';
+import rehypeRaw from 'rehype-raw';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 
 const richTextSchema = {
@@ -51,6 +52,10 @@ export default defineConfig({
   markdown: {
     processor: unified({
       rehypePlugins: [
+        // 必须先把 Markdown 中的原始 HTML 解析成 hast 元素节点，
+        // 再交给 rehype-sanitize 做白名单清洗；否则 <img> 等原始 HTML
+        // 会在清洗阶段被当作不安全 raw 节点直接删除。
+        rehypeRaw,
         [rehypeSanitize, richTextSchema],
         sanitizeRichTextStyles,
       ],

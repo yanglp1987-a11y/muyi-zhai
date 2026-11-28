@@ -853,9 +853,43 @@ export const prerender = true;
           const alt = file.name.replace(/[\[\]\n\r]/g, "").slice(0, 100) || "文章图片";
           const imageUrl = new URL(result.url, window.location.origin);
           imageUrl.searchParams.set("v", String(Date.now()));
-          editor?.chain().focus().setImage({ src: imageUrl.toString(), alt, widthPercent: 75 }).run();
+          // 保存为同源相对路径：任意部署域名可用，且与既有图片路径风格一致。
+          const src = imageUrl.pathname + imageUrl.search;
+
+          message(editorStatus, "图片已上传到服务器，正在插入正文……");
+          const inserted = editor?.chain().focus().setImage({ src, alt, widthPercent: 75 }).run();
+          if (!inserted) {
+            throw new Error("图片已上传，但插入编辑器失败，请重试。");
+          }
           syncEditorContent();
-          message(editorStatus, "图片上传成功，已插入正文。");
+
+          const domImage = Array.from(richEditor.querySelectorAll<HTMLImageElement>("img"))
+            .find(img => img.getAttribute("src") === src);
+          if (!domImage) {
+            throw new Error("图片已上传，但编辑器中未生成图片节点，请重试。");
+          }
+
+          message(editorStatus, "图片已插入正文，正在确认是否能正常显示……");
+          const loaded = await new Promise<boolean>(resolve => {
+            let settled = false;
+            const finish = (ok: boolean) => {
+              if (settled) return;
+              settled = true;
+              window.clearTimeout(timer);
+              resolve(ok);
+            };
+            const timer = window.setTimeout(() => finish(false), 15000);
+            const probe = new Image();
+            probe.onload = () => finish(true);
+            probe.onerror = () => finish(false);
+            probe.src = src;
+          });
+
+          if (loaded) {
+            message(editorStatus, "图片上传成功，已插入正文并正常显示。");
+          } else {
+            message(editorStatus, "图片已上传并插入正文，但图片加载失败，请稍后重试或检查网络。", true);
+          }
         } catch (error) {
           message(editorStatus, (error as Error).message || "图片上传失败。", true);
         } finally {

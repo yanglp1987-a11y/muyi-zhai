@@ -142,7 +142,7 @@ export async function onRequestPost({ request, env }) {
 
     return json({
       success: true,
-      url: `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/${IMAGE_PATH}/${filename}`,
+      url: `/images/proxy/${filename}`,
       message: "图片上传成功"
     });
   } catch (error) {
