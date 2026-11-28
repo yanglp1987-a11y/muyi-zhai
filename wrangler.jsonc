@@ -1,9 +1,12 @@
-
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "muyi-zhai",
   "compatibility_date": "2026-11-23",
   "pages_build_output_dir": "./dist",
+
+  // 顶层绑定：保持原样不动。仅作为本地 `wrangler pages dev` 的默认绑定，
+  // 线上环境以 env.production / env.preview 中的整段声明为准
+  // （kv_namespaces、vars 等属于「非继承键」，不会被顶层继承）。
   "kv_namespaces": [
     {
       "binding": "AUTH_CODES",
@@ -13,5 +16,24 @@
       "binding": "ARTICLE_DRAFTS",
       "id": "e278cc3f643c4a1a941bb0e8fede5dfb"
     }
-  ]
+  ],
+
+  "env": {
+    // Preview 环境：使用独立 KV 与独立 GitHub 写入分支，避免影响线上数据。
+    "preview": {
+      "kv_namespaces": [
+        {
+          "binding": "AUTH_CODES",
+          "id": "40fa0e12905742af8980c1f66ed893cc"
+        },
+        {
+          "binding": "ARTICLE_DRAFTS",
+          "id": "0f5c908405f3405aa99e349c007a1acd"
+        }
+      ],
+      "vars": {
+        "GITHUB_WRITE_BRANCH": "preview-phase7"
+      }
+    }
+  }
 }
